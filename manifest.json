@@ -1,16 +1,24 @@
 {
   "name": "Krishna Fit",
   "short_name": "KrishnaFit",
-  "start_url": "./index.html",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#f3f5f2",
-  "theme_color": "#13271f",
-  "description": "Fitness, nutrition, recovery, supplement and lab tracker",
+  "theme_color": "#172c23",
+  "description": "Personal nutrition, training, recovery, supplements and lab tracker",
   "icons": [
     {
-      "src": "favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]
