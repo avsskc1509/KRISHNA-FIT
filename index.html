@@ -135,7 +135,7 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 <label class="field">Email<input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></label>
 <label class="field">Password<input id="authPassword" type="password" autocomplete="current-password" minlength="8" placeholder="8+ characters"></label>
 </div>
-<div class="authactions"><button class="primary" onclick="signInCloud()">Sign in</button><button class="ghost" onclick="signUpCloud()">Create account</button></div>
+<div class="authactions"><button class="primary" onclick="signInCloud()">Sign in</button><button class="ghost" onclick="signUpCloud()">Create account</button><button class="ghost" onclick="resendConfirmation()">Resend confirmation email</button></div>
 </div>
 <div id="signedInAuth" class="hidden">
 <p><b id="authUserEmail"></b></p>
@@ -324,6 +324,14 @@ async function signUpCloud(){
  if(error){$('authStatus').textContent=error.message;return}
  $('authStatus').textContent=data.session?'Account created and signed in.':'Check your email to confirm the account, then return here and sign in.';
  if(data.session){currentUser=data.user;setCloudUI('Signed in');await pullCloudState()}
+}
+async function resendConfirmation(){
+ let email=$('authEmail').value.trim();
+ if(!email)return toast('Enter your email first');
+ $('authStatus').textContent='Sending a fresh confirmation email…';
+ let redirectTo=location.origin+location.pathname;
+ let {error}=await cloud.auth.resend({type:'signup',email,options:{emailRedirectTo:redirectTo}});
+ $('authStatus').textContent=error?error.message:'Fresh confirmation email sent. Use the newest email only.';
 }
 async function signInCloud(){
  let email=$('authEmail').value.trim(),password=$('authPassword').value;
