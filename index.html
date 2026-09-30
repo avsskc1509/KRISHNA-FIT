@@ -81,10 +81,10 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 .switch{display:flex;align-items:center;gap:9px;margin:12px 0}.switch input{width:19px;height:19px}
 .badge{display:inline-flex;padding:5px 9px;border-radius:999px;background:#e8eee5;font-size:12px}.badge.good{background:#def4d8;color:#315f34}.badge.bad{background:#fff0d0;color:#7a5600}
 .tablewrap{overflow:auto}.datatable{width:100%;border-collapse:collapse;min-width:620px}.datatable th,.datatable td{text-align:left;padding:11px;border-bottom:1px solid var(--line);font-size:13px}
-.hidden{display:none!important}.footer{padding:24px 0;color:#748077;font-size:12px}
+.hidden{display:none!important}.goal-editor{display:none}.goal-editor.open{display:block;animation:fade .2s ease}.plan-change{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.plan-change div{background:rgba(255,255,255,.62);border:1px solid rgba(80,110,65,.14);border-radius:8px;padding:9px}.plan-change strong{font-size:16px;margin:0}.footer{padding:24px 0;color:#748077;font-size:12px}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,18px);opacity:0;background:#143227;color:#fff;border-radius:10px;padding:10px 14px;font-weight:700;transition:.18s ease;z-index:99;pointer-events:none}.toast.show{opacity:1;transform:translate(-50%,0)}
 @media(max-width:900px){.topgrid{grid-template-columns:1fr}.bottomgrid{grid-template-columns:1fr 1fr}.bottomgrid .sauna{grid-column:span 2}}
-@media(max-width:700px){
+@media(max-width:700px){.plan-change{grid-template-columns:1fr 1fr}
  .shell{padding:0 12px calc(28px + env(safe-area-inset-bottom))}
  header{height:72px}.private{display:none}
  .heading{margin:26px 0 22px;flex-direction:column;align-items:flex-start}.heading h1{font-size:34px}
@@ -103,7 +103,7 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 <header>
 <a class="brandlink" href="./"><span class="logo"><svg viewBox="0 0 32 32"><path d="M4 17h6l3-9 5 17 4-9h6"/></svg></span><span class="brand">krishna<span>fit</span></span></a>
 <span class="private">YOUR PERSONAL TRAINING SPACE</span>
-<button class="iconbutton" onclick="showTab('overview');document.getElementById('targetsCard').scrollIntoView({behavior:'smooth'})" aria-label="Settings"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+<button class="iconbutton" onclick="openGoalEditor()" aria-label="Settings"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
 </header>
 
 <section class="heading">
@@ -124,7 +124,7 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 </div>
 
 <section id="overview" class="section active">
-<section class="card" id="targetsCard">
+<section class="card goal-editor" id="targetsCard">
 <h2>Your starting targets</h2>
 <p class="muted">Planning targets that can adapt to your goal. Review your 2–3 week weight trend, hunger, recovery and gym performance; then adjust as needed.</p>
 <div class="formgrid">
@@ -143,11 +143,11 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 <label class="switch"><input id="adaptiveGoal" type="checkbox" checked onchange="previewAdaptivePlan()">Adapt calories, macros and workout schedule when my goal changes</label>
 <div id="adaptivePreview" class="notice adaptive"></div>
 <p class="muted">When adaptation is on, Krishna Fit uses your requested weekly rate as a planning signal, keeps protein relatively high, maintains a minimum fat target, and reduces training frequency when the requested deficit is harder to recover from. It is a planning estimate, not a measured calorie requirement.</p>
-<button class="primary" onclick="saveTargets()">Save targets</button>
+<button class="primary" onclick="saveTargets()">Save & adapt plan</button> <button class="ghost" onclick="closeGoalEditor()">Cancel</button>
 </section>
 
 <section class="card goalcard">
-<div class="cardtop"><div><p class="eyebrow">YOUR WEIGHT GOAL</p><h2 id="goalHeadline">98 kg to 78 kg</h2></div><button class="ghost" onclick="document.getElementById('targetsCard').scrollIntoView({behavior:'smooth'})">Edit goal</button></div>
+<div class="cardtop"><div><p class="eyebrow">YOUR WEIGHT GOAL</p><h2 id="goalHeadline">98 kg to 78 kg</h2></div><button class="ghost" onclick="openGoalEditor()">Edit goal</button></div>
 <div class="goalstats">
 <div><strong id="goalCurrent">98.0 <small>kg</small></strong><span id="goalCurrentLabel">Starting weight</span></div>
 <div><strong id="goalRemaining">20.0 <small>kg</small></strong><span>To your target</span></div>
@@ -229,15 +229,20 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 </div>
 
 <script>
-const KEY='krishnaFitDataV8';
+const KEY='krishnaFitDataV10';
+const LEGACY_KEYS=['krishnaFitDataV9','krishnaFitDataV8','krishnaFitDataV7','krishnaFitDataV6','krishnaFitDataV5','krishnaFitDataV4'];
+function loadStored(){try{let raw=localStorage.getItem(KEY);if(raw)return JSON.parse(raw);for(let k of LEGACY_KEYS){raw=localStorage.getItem(k);if(raw){let parsed=JSON.parse(raw);localStorage.setItem(KEY,JSON.stringify(parsed));return parsed}}}catch(e){}return null}
 const defaultState={baseCalories:2200,proteinTarget:190,fatTarget:70,gymDays:4,adaptiveGoal:true,startWeight:98,targetWeight:78,startDate:'2026-09-30',goalDate:'2027-03-30',days:{},supplements:[],labs:[],labReports:[],suppTaken:{},reminderSent:{}};
-let state={...structuredClone(defaultState),...(JSON.parse(localStorage.getItem(KEY)||'null')||{})};
+let state={...structuredClone(defaultState),...(loadStored()||{})};
 state.days=state.days||{};state.supplements=state.supplements||[];state.labs=state.labs||[];state.labReports=state.labReports||[];state.suppTaken=state.suppTaken||{};state.reminderSent=state.reminderSent||{};
 let selectedDate=new Date().toLocaleDateString('en-CA');let toastTimer;
 const $=id=>document.getElementById(id), num=x=>Number.isFinite(Number(x))?Number(x):0, esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 function toast(msg){let t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),1600)}
+function openGoalEditor(){showTab('overview');let card=$('targetsCard');card.classList.add('open');renderGoalInputs();previewAdaptivePlan();setTimeout(()=>card.scrollIntoView({behavior:'smooth',block:'start'}),30)}
+function closeGoalEditor(){$('targetsCard').classList.remove('open');window.scrollTo({top:0,behavior:'smooth'})}
+function renderGoalInputs(){$('setCalories').value=state.baseCalories;$('setProtein').value=state.proteinTarget;$('setFat').value=state.fatTarget;$('setGymDays').value=String(state.gymDays);$('setStartWeight').value=state.startWeight;$('setTargetWeight').value=state.targetWeight;$('setStartDate').value=state.startDate;$('setGoalDate').value=state.goalDate;$('adaptiveGoal').checked=state.adaptiveGoal!==false}
 function day(){state.days[selectedDate]??={foods:[],source:'app',whoop:{activity:'',duration:0,strain:'',calories:0,useBurn:false,eatbackPct:50},recovery:'',sleep:'',dayStrain:'',weight:'',water:0,ill:false,dehydrated:false,alcohol:false};return state.days[selectedDate]}
-function persist(msg){localStorage.setItem(KEY,JSON.stringify(state));$('saveState').textContent='Saved';if(msg)toast(msg);render()}
+function persist(msg){try{let data=JSON.stringify(state);localStorage.setItem(KEY,data);if(localStorage.getItem(KEY)!==data)throw Error('storage verification failed');$('saveState').textContent='Saved';if(msg)toast(msg);render();return true}catch(e){$('saveState').textContent='Not saved';toast('Safari could not save changes');return false}}
 function showTab(id){document.querySelectorAll('.section').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));window.scrollTo({top:0,behavior:'smooth'})}
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 function changeDate(v){if(!v)return;selectedDate=v;render();window.scrollTo({top:0,behavior:'smooth'})}
@@ -266,7 +271,10 @@ function previewAdaptivePlan(){
   if(!sw||!tw||!sd||!gd||gd<=sd){$('adaptivePreview').innerHTML='<strong>Adaptive plan</strong>Enter a valid starting weight, target weight and goal date to preview the recalculation.';return}
   let plan=goalPlan(sw,tw,sd,gd);
   $('adaptivePreview').className='notice adaptive'+(plan.aggressive?' aggressive':'');
-  $('adaptivePreview').innerHTML='<strong>'+plan.label+'</strong>'+plan.weekly.toFixed(2)+' kg/week ('+plan.ratePct.toFixed(2)+'% of starting weight/week) · '+plan.baseCalories+' kcal rest day · '+plan.proteinTarget+' g protein · '+plan.fatTarget+' g fat · '+plan.gymDays+' gym days/week.<br><span class="small">'+plan.explanation+'</span>';
+  let changed=plan.baseCalories!==state.baseCalories||plan.proteinTarget!==state.proteinTarget||plan.fatTarget!==state.fatTarget||plan.gymDays!==state.gymDays;
+  $('adaptivePreview').innerHTML='<strong>'+plan.label+'</strong>'+plan.weekly.toFixed(2)+' kg/week ('+plan.ratePct.toFixed(2)+'% of starting weight/week)'+
+  '<div class="plan-change"><div><span class="small">Calories</span><strong>'+state.baseCalories+' → '+plan.baseCalories+'</strong></div><div><span class="small">Protein</span><strong>'+state.proteinTarget+' → '+plan.proteinTarget+' g</strong></div><div><span class="small">Fat</span><strong>'+state.fatTarget+' → '+plan.fatTarget+' g</strong></div><div><span class="small">Gym days</span><strong>'+state.gymDays+' → '+plan.gymDays+'</strong></div></div>'+
+  '<span class="small">'+(changed?'These changes will apply when you save. ':'Your current targets already match this adaptive plan. ')+plan.explanation+'</span>';
 }
 function adjustedTarget(){let d=day(),burn=d.source==='whoop'?num(d.whoop.calories):0,eatback=d.source==='whoop'&&d.whoop.useBurn?Math.round(burn*num(d.whoop.eatbackPct)/100):0,weekday=new Date(selectedDate+'T12:00:00').getDay(),training=trainingDaysFor(state.gymDays).includes(weekday)&&d.source!=='rest';return{burn,eatback,target:state.baseCalories+(training?100:0)+eatback}}
 function saveTargets(){
@@ -275,7 +283,7 @@ function saveTargets(){
   if(adaptive){let plan=goalPlan(sw,tw,sd,gd);c=plan.baseCalories;p=plan.proteinTarget;f=plan.fatTarget;g=plan.gymDays}
   if(c<1200||p<40||f<30)return toast('Check your calorie and macro targets');
   Object.assign(state,{baseCalories:c,proteinTarget:p,fatTarget:f,gymDays:g,adaptiveGoal:adaptive,startWeight:sw,targetWeight:tw,startDate:sd,goalDate:gd});
-  persist(adaptive?'Goal and plan adapted':'Targets saved');
+  if(persist(adaptive?'Goal and plan adapted':'Targets saved')){closeGoalEditor()}
 }
 function addFood(){let name=$('foodName').value.trim();if(!name)return toast('Enter a food name');day().foods.push({id:crypto.randomUUID(),name,kcal:num($('foodKcal').value),p:num($('foodP').value),c:num($('foodC').value),f:num($('foodF').value)});['foodName','foodKcal','foodP','foodC','foodF'].forEach(id=>$(id).value='');persist('Meal added')}
 function removeFood(id){day().foods=day().foods.filter(x=>x.id!==id);persist()}
@@ -303,7 +311,7 @@ async function deleteLabReport(id){try{let db=await openLabDb(),tx=db.transactio
 function render(){
  $('selectedDate').value=selectedDate;let d=day(),t=totals(),a=adjustedTarget();
  ['setCalories','setProtein','setFat','setGymDays','setStartWeight','setTargetWeight','setStartDate','setGoalDate'].forEach(id=>{});
- $('setCalories').value=state.baseCalories;$('setProtein').value=state.proteinTarget;$('setFat').value=state.fatTarget;$('setGymDays').value=String(state.gymDays);$('setStartWeight').value=state.startWeight;$('setTargetWeight').value=state.targetWeight;$('setStartDate').value=state.startDate;$('setGoalDate').value=state.goalDate;$('adaptiveGoal').checked=state.adaptiveGoal!==false;previewAdaptivePlan();
+ if(!$('targetsCard').classList.contains('open'))renderGoalInputs();
  $('eaten').textContent=Math.round(t.k);$('target').textContent=a.target;$('calBar').style.width=Math.min(100,t.k/a.target*100)+'%';$('remainingText').textContent=(t.k>a.target?Math.round(t.k-a.target)+' kcal over target':Math.round(a.target-t.k)+' kcal remaining');
  $('pNow').textContent=Math.round(t.p);$('cNow').textContent=Math.round(t.c);$('fNow').textContent=Math.round(t.f);$('pTarget').textContent=state.proteinTarget;$('fTarget').textContent=state.fatTarget;let carbs=Math.max(0,Math.round((a.target-state.proteinTarget*4-state.fatTarget*9)/4));$('cTarget').textContent=carbs;$('pBar').style.width=Math.min(100,t.p/state.proteinTarget*100)+'%';$('cBar').style.width=Math.min(100,t.c/Math.max(1,carbs)*100)+'%';$('fBar').style.width=Math.min(100,t.f/state.fatTarget*100)+'%';
  $('foodKcalTotal').textContent=Math.round(t.k)+' kcal';
@@ -337,8 +345,11 @@ $('workoutPlan').innerHTML='<h3>'+woName+'</h3><p class="muted">'+volumeNote+'</
  $('labRows').innerHTML=state.labs.length?state.labs.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(l=>`<tr><td>${esc(l.date)}</td><td><b>${esc(l.marker)}</b></td><td>${l.value} ${esc(l.unit||'')}</td><td>${l.low!==''?l.low:'—'} – ${l.high!==''?l.high:'—'}</td><td><span class="badge ${labStatus(l)==='In range'?'good':'bad'}">${labStatus(l)}</span></td><td><button class="iconbutton" onclick="removeLab('${l.id}')">×</button></td></tr>`).join(''):'<tr><td colspan="6" class="muted">No lab values entered yet.</td></tr>';let guidance=labGuidance();$('labPlan').innerHTML=guidance.length?guidance.map(x=>`<div class="notice"><b>${esc(x.title)}</b><br>${esc(x.text)}</div>`).join(''):'<div class="notice">No out-of-range values are entered.</div>';$('labFiles').innerHTML=state.labReports.length?state.labReports.map(f=>`<div class="row"><div><b>${esc(f.name)}</b><div class="small">Stored locally · ${Math.round(f.size/1024)} KB</div></div><span></span><button class="iconbutton" onclick="deleteLabReport('${f.id}')">×</button></div>`).join(''):'<p class="small">No report files attached.</p>';
  $('labDate').value=selectedDate;
 }
-render();previewAdaptivePlan();
-if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+render();
+if('serviceWorker'in navigator){
+ navigator.serviceWorker.register('./sw.js').then(reg=>{reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'})}).catch(()=>{});
+ let refreshing=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(refreshing)return;refreshing=true;location.reload()});
+}
 </script>
 </body>
 </html>
