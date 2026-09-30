@@ -10,6 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="icon" href="favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <title>Krishna Fit</title>
 <style>
 :root{--bg:#f2f4f0;--card:#fff;--ink:#17211f;--muted:#69746d;--line:#d9e0d8;--dark:#153329;--lime:#c5fa72;--green:#edf3e7;--beige:#f1ebe3;--blue:#9dbdff;--peach:#efc2a0;--red:#a8434d}
@@ -40,7 +41,7 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 .tabs button svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .tabs button.active{background:#133328;color:#fff}
 .saved{background:#d9f8b0;border:1px solid #c8ee98;color:#4d6a43;border-radius:9px;padding:10px 17px;font-weight:700;display:flex;align-items:center;gap:7px}
-.saved svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2}
+.saved svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2}.cloudbtn{border:1px solid var(--line);background:#fff;color:#355044;border-radius:9px;padding:9px 12px;font-weight:750}.cloudbtn.synced{background:#e6f5dd;border-color:#cce8bc}.authpanel{display:none}.authpanel.open{display:block;animation:fade .18s ease}.authactions{display:flex;gap:8px;flex-wrap:wrap}.authstatus{margin-top:10px}
 .section{display:none}.section.active{display:block;animation:fade .22s ease}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:24px;margin-bottom:18px}
@@ -104,6 +105,7 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 <header>
 <a class="brandlink" href="./"><span class="logo"><svg viewBox="0 0 32 32"><path d="M4 17h6l3-9 5 17 4-9h6"/></svg></span><span class="brand">krishna<span>fit</span></span></a>
 <span class="private">YOUR PERSONAL TRAINING SPACE</span>
+<button id="cloudButton" class="cloudbtn" onclick="toggleAuthPanel()">Local only</button>
 <button class="iconbutton" onclick="openGoalEditor()" aria-label="Settings"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
 </header>
 
@@ -124,6 +126,24 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 </nav>
 <div class="saved"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 7"/></svg><span id="saveState">Saved</span></div>
 </div>
+
+<section id="authPanel" class="card authpanel">
+<div class="cardtop"><div><p class="eyebrow">CLOUD SYNC</p><h2>Sync Krishna Fit across devices</h2></div><button class="iconbutton" onclick="toggleAuthPanel()">×</button></div>
+<div id="signedOutAuth">
+<p class="muted">Use the same email and password on your Mac and iPhone. Your local data will remain available offline and sync to your private Supabase account when signed in.</p>
+<div class="formgrid">
+<label class="field">Email<input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></label>
+<label class="field">Password<input id="authPassword" type="password" autocomplete="current-password" minlength="8" placeholder="8+ characters"></label>
+</div>
+<div class="authactions"><button class="primary" onclick="signInCloud()">Sign in</button><button class="ghost" onclick="signUpCloud()">Create account</button></div>
+</div>
+<div id="signedInAuth" class="hidden">
+<p><b id="authUserEmail"></b></p>
+<p class="muted">Cloud sync is active. Changes on this device are uploaded automatically, and signing in on another device loads the same Krishna Fit data.</p>
+<div class="authactions"><button class="ghost" onclick="pullCloudState()">Refresh from cloud</button><button class="ghost" onclick="signOutCloud()">Sign out</button></div>
+</div>
+<p id="authStatus" class="small authstatus"></p>
+</section>
 
 <section id="overview" class="section active">
 <section class="card goal-editor" id="targetsCard">
@@ -262,6 +282,10 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 
 <script>
 const KEY='krishnaFitDataV10';
+const SUPABASE_URL='https://gftmzsxunyqgciixaidz.supabase.co';
+const SUPABASE_KEY='sb_publishable_eqIeQmhO3Fa4W2O0Ef99eg_eVIa1MlF';
+const cloud=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let currentUser=null,cloudTimer=null,applyingCloud=false;
 const LEGACY_KEYS=['krishnaFitDataV9','krishnaFitDataV8','krishnaFitDataV7','krishnaFitDataV6','krishnaFitDataV5','krishnaFitDataV4'];
 function loadStored(){try{let raw=localStorage.getItem(KEY);if(raw)return JSON.parse(raw);for(let k of LEGACY_KEYS){raw=localStorage.getItem(k);if(raw){let parsed=JSON.parse(raw);localStorage.setItem(KEY,JSON.stringify(parsed));return parsed}}}catch(e){}return null}
 const defaultState={baseCalories:2200,proteinTarget:190,fatTarget:70,gymDays:4,adaptiveGoal:true,startWeight:98,targetWeight:78,startDate:'2026-09-30',goalDate:'2027-03-30',days:{},supplements:[],labs:[],labReports:[],suppTaken:{},reminderSent:{}};
@@ -288,11 +312,58 @@ state.days=state.days||{};state.supplements=state.supplements||[];state.labs=sta
 let selectedDate=new Date().toLocaleDateString('en-CA');let toastTimer;
 const $=id=>document.getElementById(id), num=x=>Number.isFinite(Number(x))?Number(x):0, esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 function toast(msg){let t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),1600)}
+function toggleAuthPanel(){let p=$('authPanel');p.classList.toggle('open');if(p.classList.contains('open'))p.scrollIntoView({behavior:'smooth',block:'start'})}
+function setCloudUI(msg=''){
+ let signed=!!currentUser;$('signedOutAuth').classList.toggle('hidden',signed);$('signedInAuth').classList.toggle('hidden',!signed);$('authUserEmail').textContent=currentUser?.email||'';$('cloudButton').textContent=signed?'Cloud synced':'Local only';$('cloudButton').classList.toggle('synced',signed);if(msg)$('authStatus').textContent=msg
+}
+async function signUpCloud(){
+ let email=$('authEmail').value.trim(),password=$('authPassword').value;
+ if(!email||password.length<8)return toast('Enter email and an 8+ character password');
+ $('authStatus').textContent='Creating account…';
+ let {data,error}=await cloud.auth.signUp({email,password});
+ if(error){$('authStatus').textContent=error.message;return}
+ $('authStatus').textContent=data.session?'Account created and signed in.':'Check your email to confirm the account, then return here and sign in.';
+ if(data.session){currentUser=data.user;setCloudUI('Signed in');await pullCloudState()}
+}
+async function signInCloud(){
+ let email=$('authEmail').value.trim(),password=$('authPassword').value;
+ if(!email||!password)return toast('Enter email and password');
+ $('authStatus').textContent='Signing in…';
+ let {data,error}=await cloud.auth.signInWithPassword({email,password});
+ if(error){$('authStatus').textContent=error.message;return}
+ currentUser=data.user;setCloudUI('Signed in');await pullCloudState()
+}
+async function signOutCloud(){await cloud.auth.signOut();currentUser=null;setCloudUI('Signed out. Local data remains on this device.')}
+async function pushCloudState(){
+ if(!currentUser||applyingCloud)return;
+ $('authStatus').textContent='Syncing…';
+ let {error}=await cloud.from('krishna_fit_state').upsert({user_id:currentUser.id,data:state},{onConflict:'user_id'});
+ $('authStatus').textContent=error?('Sync failed: '+error.message):('Synced '+new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}));
+}
+function scheduleCloudSync(){if(!currentUser||applyingCloud)return;clearTimeout(cloudTimer);cloudTimer=setTimeout(pushCloudState,600)}
+async function pullCloudState(){
+ if(!currentUser)return;
+ $('authStatus').textContent='Loading cloud data…';
+ let {data,error}=await cloud.from('krishna_fit_state').select('data,updated_at').eq('user_id',currentUser.id).maybeSingle();
+ if(error){$('authStatus').textContent='Cloud load failed: '+error.message;return}
+ if(!data){
+   $('authStatus').textContent='First sync: uploading this device’s data…';await pushCloudState();return
+ }
+ applyingCloud=true;
+ state={...structuredClone(defaultState),...(data.data||{})};
+ state.days=state.days||{};state.supplements=state.supplements||[];state.labs=state.labs||[];state.labReports=state.labReports||[];state.suppTaken=state.suppTaken||{};state.reminderSent=state.reminderSent||{};
+ localStorage.setItem(KEY,JSON.stringify(state));applyingCloud=false;render();$('authStatus').textContent='Loaded cloud data from '+new Date(data.updated_at).toLocaleString()
+}
+async function initCloud(){
+ let {data}=await cloud.auth.getSession();currentUser=data.session?.user||null;setCloudUI();
+ if(currentUser)await pullCloudState();
+ cloud.auth.onAuthStateChange(async(event,session)=>{currentUser=session?.user||null;setCloudUI();if(event==='SIGNED_IN'&&currentUser)await pullCloudState()})
+}
 function openGoalEditor(){showTab('overview');let card=$('targetsCard');card.classList.add('open');renderGoalInputs();previewAdaptivePlan();setTimeout(()=>card.scrollIntoView({behavior:'smooth',block:'start'}),30)}
 function closeGoalEditor(){$('targetsCard').classList.remove('open');window.scrollTo({top:0,behavior:'smooth'})}
 function renderGoalInputs(){$('setCalories').value=state.baseCalories;$('setProtein').value=state.proteinTarget;$('setFat').value=state.fatTarget;$('setGymDays').value=String(state.gymDays);$('setStartWeight').value=state.startWeight;$('setTargetWeight').value=state.targetWeight;$('setStartDate').value=state.startDate;$('setGoalDate').value=state.goalDate;$('adaptiveGoal').checked=state.adaptiveGoal!==false}
 function day(){state.days[selectedDate]??={foods:[],source:'app',whoop:{activity:'',duration:0,strain:'',calories:0,useBurn:false,eatbackPct:50},recovery:'',sleep:'',dayStrain:'',weight:'',water:0,steps:'',dayCalories:'',restingHR:'',hrv:'',respRate:'',sleepPerformance:'',ill:false,dehydrated:false,alcohol:false};return state.days[selectedDate]}
-function persist(msg){try{let data=JSON.stringify(state);localStorage.setItem(KEY,data);if(localStorage.getItem(KEY)!==data)throw Error('storage verification failed');$('saveState').textContent='Saved';if(msg)toast(msg);render();return true}catch(e){$('saveState').textContent='Not saved';toast('Safari could not save changes');return false}}
+function persist(msg){try{let data=JSON.stringify(state);localStorage.setItem(KEY,data);if(localStorage.getItem(KEY)!==data)throw Error('storage verification failed');$('saveState').textContent='Saved';if(msg)toast(msg);render();scheduleCloudSync();return true}catch(e){$('saveState').textContent='Not saved';toast('Safari could not save changes');return false}}
 function showTab(id){document.querySelectorAll('.section').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));window.scrollTo({top:0,behavior:'smooth'})}
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 function changeDate(v){if(!v)return;selectedDate=v;render();window.scrollTo({top:0,behavior:'smooth'})}
@@ -381,8 +452,8 @@ function norm(s){return String(s).toLowerCase().replace(/[^a-z0-9]+/g,' ')}
 function labGuidance(){let out=[];for(let l of state.labs.slice().sort((a,b)=>b.date.localeCompare(a.date))){let st=labStatus(l),m=norm(l.marker),text='';if(st==='In range'||st==='No range')continue;if(/vitamin d|25 oh/.test(m)&&st==='Low')text='Discuss vitamin D replacement with a clinician; do not megadose from the app.';else if(/b12|cobalamin/.test(m)&&st==='Low')text='Discuss B12 supplementation and the cause of deficiency.';else if(/ferritin|iron/.test(m)&&st==='Low')text='Do not self-start iron solely from this app; confirm cause and dosing with a clinician.';else if(/hemoglobin|haemoglobin|hgb/.test(m)&&st==='Low')text='If you have fatigue, dizziness, chest symptoms or unusual breathlessness, avoid hard training until reviewed.';else if(/creatinine|egfr/.test(m))text='Avoid starting or increasing creatine/high-dose supplements until kidney-function results are reviewed.';else if(/alt|ast|liver/.test(m)&&st==='High')text='Avoid alcohol and unnecessary supplements until reviewed; training advice depends on the cause.';else if(/a1c|hba1c|glucose/.test(m)&&st==='High')text='Prioritize fiber-rich meals, sleep and regular activity; discuss the result with a clinician.';else text='This result is outside the reference range you entered. Avoid major training or supplement changes from one result alone.';out.push({title:`${l.marker}: ${st}`,text})}return out}
 function supplementRecommendations(){let out=[];for(let x of labGuidance()){if(/vitamin d/i.test(x.title))out.push('Vitamin D: discuss supplementation based on the lab result; no dose is chosen here.');if(/b12/i.test(x.title))out.push('Vitamin B12: discuss supplementation and why the level is low.');if(/ferritin|iron/i.test(x.title))out.push('Iron: clinician-guided only after deficiency and cause are confirmed.');if(/creatinine|egfr/i.test(x.title))out.push('Creatine: do not start or increase until kidney-function results are reviewed.')}if(!out.length)out.push('No lab-driven supplement is clearly indicated from the values entered.');return [...new Set(out)]}
 function openLabDb(){return new Promise((res,rej)=>{let q=indexedDB.open('KrishnaFitFiles',1);q.onupgradeneeded=()=>q.result.createObjectStore('reports',{keyPath:'id'});q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
-async function storeLabReport(e){let file=e.target.files?.[0];if(!file)return;if(file.size>15*1024*1024)return toast('Use a report under 15 MB');let id=crypto.randomUUID();try{let db=await openLabDb(),tx=db.transaction('reports','readwrite');tx.objectStore('reports').put({id,name:file.name,type:file.type,size:file.size,file});await new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});state.labReports.push({id,name:file.name,size:file.size,added:selectedDate});persist('Report stored locally')}catch{toast('Could not store this report')}finally{e.target.value=''}}
-async function deleteLabReport(id){try{let db=await openLabDb(),tx=db.transaction('reports','readwrite');tx.objectStore('reports').delete(id)}catch{}state.labReports=state.labReports.filter(x=>x.id!==id);persist()}
+async function storeLabReport(e){let file=e.target.files?.[0];if(!file)return;if(file.size>15*1024*1024)return toast('Use a report under 15 MB');let id=crypto.randomUUID(),storagePath='';try{let db=await openLabDb(),tx=db.transaction('reports','readwrite');tx.objectStore('reports').put({id,name:file.name,type:file.type,size:file.size,file});await new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});if(currentUser){let safe=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');storagePath=currentUser.id+'/'+id+'-'+safe;let {error}=await cloud.storage.from('krishna-fit-labs').upload(storagePath,file,{upsert:false});if(error)throw error}state.labReports.push({id,name:file.name,size:file.size,added:selectedDate,storagePath});persist(currentUser?'Report stored & synced':'Report stored locally')}catch(err){toast('Could not store this report: '+(err.message||''))}finally{e.target.value=''}}
+async function deleteLabReport(id){let rec=state.labReports.find(x=>x.id===id);try{let db=await openLabDb(),tx=db.transaction('reports','readwrite');tx.objectStore('reports').delete(id)}catch{}if(currentUser&&rec?.storagePath){await cloud.storage.from('krishna-fit-labs').remove([rec.storagePath])}state.labReports=state.labReports.filter(x=>x.id!==id);persist()}
 function parseCSV(text){
  let rows=[],row=[],cell='',q=false;
  for(let i=0;i<text.length;i++){let c=text[i];if(c==='"'){if(q&&text[i+1]==='"'){cell+='"';i++}else q=!q}else if(c===','&&!q){row.push(cell);cell=''}else if((c==='\n'||c==='\r')&&!q){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell);if(row.some(x=>x.trim()!==''))rows.push(row);row=[];cell=''}else cell+=c}
@@ -513,7 +584,7 @@ $('workoutPlan').innerHTML='<h3>'+woName+'</h3><p class="muted">'+volumeNote+'</
  $('labRows').innerHTML=state.labs.length?state.labs.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(l=>`<tr><td>${esc(l.date)}</td><td><b>${esc(l.marker)}</b></td><td>${l.value} ${esc(l.unit||'')}</td><td>${l.low!==''?l.low:'—'} – ${l.high!==''?l.high:'—'}</td><td><span class="badge ${labStatus(l)==='In range'?'good':'bad'}">${labStatus(l)}</span></td><td><button class="iconbutton" onclick="removeLab('${l.id}')">×</button></td></tr>`).join(''):'<tr><td colspan="6" class="muted">No lab values entered yet.</td></tr>';let guidance=labGuidance();$('labPlan').innerHTML=guidance.length?guidance.map(x=>`<div class="notice"><b>${esc(x.title)}</b><br>${esc(x.text)}</div>`).join(''):'<div class="notice">No out-of-range values are entered.</div>';$('labFiles').innerHTML=state.labReports.length?state.labReports.map(f=>`<div class="row"><div><b>${esc(f.name)}</b><div class="small">Stored locally · ${Math.round(f.size/1024)} KB</div></div><span></span><button class="iconbutton" onclick="deleteLabReport('${f.id}')">×</button></div>`).join(''):'<p class="small">No report files attached.</p>';
  $('labDate').value=selectedDate;renderTrends();
 }
-render();
+render();initCloud();
 if('serviceWorker'in navigator){
  navigator.serviceWorker.register('./sw.js').then(reg=>{reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'})}).catch(()=>{});
  let refreshing=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(refreshing)return;refreshing=true;location.reload()});
