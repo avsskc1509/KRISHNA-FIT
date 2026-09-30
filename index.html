@@ -425,7 +425,32 @@ function saveTargets(){
   Object.assign(state,{baseCalories:c,proteinTarget:p,fatTarget:f,gymDays:g,adaptiveGoal:adaptive,startWeight:sw,targetWeight:tw,startDate:sd,goalDate:gd});
   if(persist(adaptive?'Goal and plan adapted':'Targets saved')){closeGoalEditor()}
 }
-function addFood(){let name=$('foodName').value.trim();if(!name)return toast('Enter a food name');day().foods.push({id:crypto.randomUUID(),name,kcal:num($('foodKcal').value),p:num($('foodP').value),c:num($('foodC').value),f:num($('foodF').value),note:''});['foodName','foodKcal','foodP','foodC','foodF'].forEach(id=>$(id).value='');persist('Meal added')}
+const FOOD_LIBRARY=[
+{name:'Oats · dry',portion:'50 g',kcal:195,p:9,c:33,f:4,aliases:'oat oatmeal'},
+{name:'Whey protein',portion:'1 scoop',kcal:120,p:24,c:3,f:2,aliases:'whey protein powder'},
+{name:'Paneer · regular',portion:'100 g',kcal:300,p:18,c:3,f:24,aliases:'paneer cottage cheese'},
+{name:'Paneer sandwich',portion:'2 whole-wheat bread slices + 100 g paneer',kcal:480,p:29,c:34,f:27,aliases:'paneer sandwich'},
+{name:'Paneer salad bowl',portion:'150 g paneer + vegetables',kcal:520,p:34,c:18,f:36,aliases:'paneer salad'},
+{name:'Greek yogurt · nonfat',portion:'100 g',kcal:59,p:10,c:4,f:0,aliases:'greek yogurt yogurt'},
+{name:'Whole-wheat bread',portion:'1 slice',kcal:80,p:4,c:14,f:1,aliases:'bread wheat bread'},
+{name:'Chapati · atta',portion:'1 medium',kcal:125,p:4,c:24,f:2,aliases:'roti chapati'},
+{name:'Cooked basmati rice',portion:'100 g',kcal:130,p:3,c:28,f:0,aliases:'rice basmati cooked rice'},
+{name:'Dal · cooked',portion:'1 cup · 200 g',kcal:230,p:15,c:36,f:4,aliases:'dal lentils'},
+{name:'Mixed vegetables',portion:'200 g',kcal:70,p:4,c:12,f:1,aliases:'vegetables mixed veg'},
+{name:'Apple',portion:'1 medium',kcal:95,p:1,c:25,f:0,aliases:'apple fruit'},
+{name:'Banana',portion:'1 medium',kcal:105,p:1,c:27,f:0,aliases:'banana fruit'},
+{name:'Almonds',portion:'30 g',kcal:174,p:6,c:6,f:15,aliases:'almonds nuts'},
+{name:'Tofu · firm',portion:'100 g',kcal:145,p:16,c:3,f:9,aliases:'tofu'},
+{name:'Protein coffee',portion:'1 serving',kcal:110,p:12,c:8,f:2,aliases:'protein coffee coffee'},
+{name:'Oats + whey breakfast',portion:'50 g oats + 1 scoop whey',kcal:315,p:33,c:36,f:6,aliases:'oats whey breakfast'},
+{name:'Paneer dinner bowl',portion:'150 g paneer + 100 g cooked rice + vegetables',kcal:620,p:36,c:46,f:35,aliases:'paneer rice bowl dinner bowl'},
+{name:'Rice + dal bowl',portion:'100 g cooked rice + 1 cup dal',kcal:360,p:18,c:64,f:4,aliases:'dal rice rice dal'},
+{name:'2 chapati + paneer',portion:'2 chapati + 100 g paneer',kcal:550,p:26,c:51,f:28,aliases:'chapati paneer roti paneer'}
+];
+function renderFoodLibrary(){let dl=$('foodLibraryList'),chips=$('foodQuickChips');if(!dl||!chips)return;dl.innerHTML=FOOD_LIBRARY.map(x=>'<option value="'+esc(x.name)+'"></option>').join('');let picks=['Oats · dry','Whey protein','Paneer · regular','Paneer sandwich','Paneer salad bowl','Chapati · atta','Cooked basmati rice','Protein coffee'];chips.innerHTML=picks.map(n=>'<button type="button" class="foodchip" onclick="selectBuiltInFood('+JSON.stringify(n)+')">'+esc(n)+'</button>').join('')}
+function selectBuiltInFood(value){let q=String(value||'').trim().toLowerCase();if(!q){renderFoodLibrary();return}let x=FOOD_LIBRARY.find(v=>v.name.toLowerCase()===q)||FOOD_LIBRARY.find(v=>(v.name+' '+v.aliases).toLowerCase().includes(q));if(!x){renderFoodLibrary();return}$('foodLibrarySearch').value=x.name;$('foodName').value=x.name;$('foodPortion').value=x.portion;$('foodKcal').value=x.kcal;$('foodP').value=x.p;$('foodC').value=x.c;$('foodF').value=x.f;$('foodMacroPreview').innerHTML='<div><span>Calories</span><strong>'+x.kcal+' kcal</strong></div><div><span>Protein</span><strong>'+x.p+' g</strong></div><div><span>Carbs</span><strong>'+x.c+' g</strong></div><div><span>Fat</span><strong>'+x.f+' g</strong></div>'}
+function clearBuiltInFood(){['foodLibrarySearch','foodName','foodPortion','foodKcal','foodP','foodC','foodF'].forEach(id=>{if($(id))$(id).value=''});if($('foodMacroPreview'))$('foodMacroPreview').innerHTML='';renderFoodLibrary()}
+function addFood(){let name=$('foodName').value.trim();if(!name)return toast('Enter a food name');day().foods.push({id:crypto.randomUUID(),name,portion:$('foodPortion').value.trim(),kcal:num($('foodKcal').value),p:num($('foodP').value),c:num($('foodC').value),f:num($('foodF').value),note:''});['foodName','foodPortion','foodKcal','foodP','foodC','foodF'].forEach(id=>$(id).value='');if($('foodLibrarySearch'))$('foodLibrarySearch').value='';if($('foodMacroPreview'))$('foodMacroPreview').innerHTML='';renderFoodLibrary();persist('Meal added')}
 function removeFood(id){day().foods=day().foods.filter(x=>x.id!==id);persist()}
 function setSource(src){day().source=src;if(src!=='whoop')day().whoop.useBurn=false;persist()}
 function saveWhoopWorkout(){let w=day().whoop;w.activity=$('activity').value.trim()||'Different workout';w.duration=Math.max(0,num($('duration').value));w.strain=$('workoutStrain').value===''?'':Math.min(21,Math.max(0,num($('workoutStrain').value)));w.calories=Math.min(5000,Math.max(0,num($('workoutCalories').value)));w.useBurn=$('useBurn').checked;w.eatbackPct=num($('eatbackPct').value);day().source='whoop';persist('Workout saved');showTab('overview')}
@@ -594,7 +619,7 @@ $('workoutPlan').innerHTML='<h3>'+woName+'</h3><p class="muted">'+volumeNote+'</
  $('labRows').innerHTML=state.labs.length?state.labs.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(l=>`<tr><td>${esc(l.date)}</td><td><b>${esc(l.marker)}</b></td><td>${l.value} ${esc(l.unit||'')}</td><td>${l.low!==''?l.low:'—'} – ${l.high!==''?l.high:'—'}</td><td><span class="badge ${labStatus(l)==='In range'?'good':'bad'}">${labStatus(l)}</span></td><td><button class="iconbutton" onclick="removeLab('${l.id}')">×</button></td></tr>`).join(''):'<tr><td colspan="6" class="muted">No lab values entered yet.</td></tr>';let guidance=labGuidance();$('labPlan').innerHTML=guidance.length?guidance.map(x=>`<div class="notice"><b>${esc(x.title)}</b><br>${esc(x.text)}</div>`).join(''):'<div class="notice">No out-of-range values are entered.</div>';$('labFiles').innerHTML=state.labReports.length?state.labReports.map(f=>`<div class="row"><div><b>${esc(f.name)}</b><div class="small">Stored locally · ${Math.round(f.size/1024)} KB</div></div><span></span><button class="iconbutton" onclick="deleteLabReport('${f.id}')">×</button></div>`).join(''):'<p class="small">No report files attached.</p>';
  $('labDate').value=selectedDate;renderTrends();
 }
-render();initCloud();
+renderFoodLibrary();render();initCloud();
 if('serviceWorker'in navigator){
  navigator.serviceWorker.register('./sw.js').then(reg=>{reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'})}).catch(()=>{});
  let refreshing=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(refreshing)return;refreshing=true;location.reload()});
