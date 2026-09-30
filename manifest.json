@@ -1,1 +1,17 @@
-{"name":"Krishna Fit","short_name":"KrishnaFit","start_url":"./index.html","display":"standalone","background_color":"#f3f5f2","theme_color":"#13271f","description":"Fitness, nutrition, recovery, supplement and lab tracker"}
+{
+  "name": "Krishna Fit",
+  "short_name": "KrishnaFit",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f3f5f2",
+  "theme_color": "#13271f",
+  "description": "Fitness, nutrition, recovery, supplement and lab tracker",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
