@@ -270,25 +270,19 @@ state.days=state.days||{};state.supplements=state.supplements||[];state.labs=sta
 {
  const k='2026-09-29';
  state.days[k]??={foods:[],source:'app',whoop:{activity:'',duration:0,strain:'',calories:0,useBurn:false,eatbackPct:50},recovery:'',sleep:'',dayStrain:'',weight:'',water:0,steps:'',dayCalories:'',restingHR:'',hrv:'',respRate:'',sleepPerformance:'',ill:false,dehydrated:false,alcohol:false};
- state.days[k].foods=state.days[k].foods||[];
- const known=[
-  {name:'Oats + 1 scoop whey + creatine',kcal:null,p:null,c:null,f:null,note:'Logged Sep 29. Exact oats quantity and whey label macros were not recorded.'},
-  {name:'Protein coffee',kcal:null,p:12,c:null,f:null,note:'Logged Sep 29. 12 g protein recorded; remaining macros were not recorded.'},
-  {name:'Paneer salad — 150 g paneer',kcal:null,p:null,c:null,f:null,note:'Logged Sep 29. 150 g paneer recorded; paneer brand and salad dressing/oil macros were not recorded.'}
+ const exactSept29=[
+  {name:'Oats · dry',portion:'50 g',kcal:195,p:9,c:33,f:4},
+  {name:'Whey protein',portion:'3 scoop',kcal:360,p:72,c:9,f:6},
+  {name:'Paneer · regular',portion:'300 g',kcal:900,p:54,c:9,f:72},
+  {name:'Greek yogurt · nonfat',portion:'100 g',kcal:59,p:10,c:4,f:0},
+  {name:'Whole-wheat bread',portion:'2 slice',kcal:160,p:8,c:28,f:2},
+  {name:'Mixed vegetables',portion:'200 g',kcal:70,p:4,c:12,f:1},
+  {name:'protein coffee',portion:'custom portion',kcal:110,p:12,c:8,f:2},
+  {name:'apple',portion:'custom portion',kcal:95,p:1,c:25,f:0},
+  {name:'chapati',portion:'custom portion',kcal:250,p:8,c:47,f:4}
  ];
- for(const item of known){
-   const existing=state.days[k].foods.find(x=>x.name===item.name);
-   if(!existing) state.days[k].foods.push({id:crypto.randomUUID(),...item});
-   else {
-     if(existing.note==null||existing.note==='') existing.note=item.note;
-     if(existing.name==='Protein coffee' && (existing.p==null||Number(existing.p)===0)) existing.p=12;
-     if(existing.kcal===0) existing.kcal=null;
-     if(existing.name!=='Protein coffee' && existing.p===0) existing.p=null;
-     if(existing.c===0) existing.c=null;
-     if(existing.f===0) existing.f=null;
-   }
- }
- state.seededSept29=true;
+ state.days[k].foods=exactSept29.map((item,i)=>({id:'sept29-'+i,...item,note:item.portion}));
+ state.seededSept29='exact-v2';
  try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}
 }
 let selectedDate=new Date().toLocaleDateString('en-CA');let toastTimer;
@@ -476,9 +470,9 @@ function render(){
  $('pNow').textContent=Math.round(t.p);$('cNow').textContent=Math.round(t.c);$('fNow').textContent=Math.round(t.f);$('pTarget').textContent=state.proteinTarget;$('fTarget').textContent=state.fatTarget;let carbs=Math.max(0,Math.round((a.target-state.proteinTarget*4-state.fatTarget*9)/4));$('cTarget').textContent=carbs;$('pBar').style.width=Math.min(100,t.p/state.proteinTarget*100)+'%';$('cBar').style.width=Math.min(100,t.c/Math.max(1,carbs)*100)+'%';$('fBar').style.width=Math.min(100,t.f/state.fatTarget*100)+'%';
  $('foodKcalTotal').textContent=Math.round(t.k)+' kcal';let incomplete=(d.foods||[]).filter(f=>f.kcal==null||f.p==null||f.c==null||f.f==null).length;$('incompleteFoodNote').textContent=incomplete?incomplete+' logged food item'+(incomplete>1?'s':'')+' have incomplete macros and are not fully counted in the energy total.':'';
  $('foodList').innerHTML=d.foods.length?d.foods.map(f=>{
- let macro='P '+(f.p==null?'—':Math.round(f.p))+' · C '+(f.c==null?'—':Math.round(f.c))+' · F '+(f.f==null?'—':Math.round(f.f))+' g';
+ let macro=(f.portion?esc(f.portion)+' · ':'')+'P '+(f.p==null?'—':Math.round(f.p))+' · C '+(f.c==null?'—':Math.round(f.c))+' · F '+(f.f==null?'—':Math.round(f.f))+' g';
  let kcal=f.kcal==null?'— kcal':Math.round(f.kcal)+' kcal';
- return `<div class="foodrow"><div><b>${esc(f.name)}</b><div class="small">${macro}${f.note?' · '+esc(f.note):''}</div></div><b>${kcal}</b><button class="iconbutton" onclick="removeFood('${f.id}')">×</button></div>`
+ return `<div class="foodrow"><div><b>${esc(f.name)}</b><div class="small">${macro}${f.note&&f.note!==f.portion?' · '+esc(f.note):''}</div></div><b>${kcal}</b><button class="iconbutton" onclick="removeFood('${f.id}')">×</button></div>`
 }).join(''):'<p class="muted">No meals logged yet.</p>';
  let weights=Object.entries(state.days).filter(([k,v])=>k<=selectedDate&&v.weight!==''&&num(v.weight)>0).sort(([a],[b])=>a.localeCompare(b)),current=weights.length?num(weights.at(-1)[1].weight):state.startWeight,goalLoss=Math.abs(state.startWeight-state.targetWeight),lost=Math.abs(state.startWeight-current),prog=goalLoss?Math.max(0,Math.min(100,lost/goalLoss*100)):100,end=new Date(state.goalDate+'T12:00:00'),sel=new Date(selectedDate+'T12:00:00'),daysLeft=Math.max(0,Math.ceil((end-sel)/86400000));
  $('goalHeadline').textContent=`${state.startWeight} kg to ${state.targetWeight} kg`;$('goalCurrent').innerHTML=`${current.toFixed(1)} <small>kg</small>`;$('goalRemaining').innerHTML=`${Math.abs(current-state.targetWeight).toFixed(1)} <small>kg</small>`;$('goalDays').innerHTML=`${daysLeft} <small>days</small>`;$('goalBar').style.width=prog+'%';$('goalProgress').textContent=`${lost.toFixed(1)} kg lost · ${Math.round(prog)}% of goal`;$('goalRange').textContent=`${state.startDate} – ${state.goalDate}`;$('goalDateText').textContent='Until '+end.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});let duration=(end-new Date(state.startDate+'T12:00:00'))/86400000,pace=goalLoss/(duration/7);$('goalPace').textContent=`Planned average: ${pace.toFixed(2)} kg/week over ${Math.round(duration)} days. Progress uses saved weigh-ins through the selected date.`;
