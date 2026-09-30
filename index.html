@@ -320,7 +320,7 @@ async function signUpCloud(){
  let email=$('authEmail').value.trim(),password=$('authPassword').value;
  if(!email||password.length<8)return toast('Enter email and an 8+ character password');
  $('authStatus').textContent='Creating account…';
- let {data,error}=await cloud.auth.signUp({email,password});
+ let redirectTo=location.origin+location.pathname;let {data,error}=await cloud.auth.signUp({email,password,options:{emailRedirectTo:redirectTo}});
  if(error){$('authStatus').textContent=error.message;return}
  $('authStatus').textContent=data.session?'Account created and signed in.':'Check your email to confirm the account, then return here and sign in.';
  if(data.session){currentUser=data.user;setCloudUI('Signed in');await pullCloudState()}
