@@ -69,7 +69,7 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 .direction{background:#edf3e7}.direction h2{font-size:29px;margin:11px 0}.direction p{color:#596755}
 .readinessstats{display:flex;gap:36px;margin:18px 0}.readinessstats strong{display:block;font-size:27px}.readinessstats span{font-size:12px;color:#687765}
 .textbutton{border:0;background:transparent;padding:0;color:#253e32;font-weight:700;display:flex;align-items:center;gap:8px}
-.bottomgrid{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:18px}
+.bottomgrid{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:18px}.activitygrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}.activitymetric{background:#f5f8f3;border:1px solid #e0e6de;border-radius:10px;padding:13px}.activitymetric span{display:block;font-size:11px;color:#6d786f}.activitymetric strong{font-size:22px;letter-spacing:-.4px}.activitymetric small{font-size:11px;color:#6d786f}.whoopcard{background:#f7faf5}
 .sessiontitle{font-size:26px;font-weight:700;letter-spacing:-.5px;margin:8px 0}
 .weekstrip{display:flex;justify-content:space-between;gap:5px;margin:22px 0}.weekstrip div{display:flex;flex-direction:column;align-items:center;gap:7px;color:#728070;font-size:11px}.weekstrip .active{color:#294322;font-weight:800}.weekstrip svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8}
 .water{display:flex;align-items:center;gap:7px;margin:18px 0}.water strong{font-size:26px;margin-right:auto}.water button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 9px;font-weight:700}
@@ -85,7 +85,7 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 .hidden{display:none!important}.goal-editor{display:none}.goal-editor.open{display:block;animation:fade .2s ease}.plan-change{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.plan-change div{background:rgba(255,255,255,.62);border:1px solid rgba(80,110,65,.14);border-radius:8px;padding:9px}.plan-change strong{font-size:16px;margin:0}.footer{padding:24px 0;color:#748077;font-size:12px}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,18px);opacity:0;background:#143227;color:#fff;border-radius:10px;padding:10px 14px;font-weight:700;transition:.18s ease;z-index:99;pointer-events:none}.toast.show{opacity:1;transform:translate(-50%,0)}
 @media(max-width:900px){.topgrid{grid-template-columns:1fr}.bottomgrid{grid-template-columns:1fr 1fr}.bottomgrid .sauna{grid-column:span 2}}
-@media(max-width:700px){.plan-change{grid-template-columns:1fr 1fr}
+@media(max-width:700px){.plan-change{grid-template-columns:1fr 1fr}.activitygrid{grid-template-columns:1fr 1fr}
  .shell{padding:0 12px calc(28px + env(safe-area-inset-bottom))}
  header{height:72px}.private{display:none}
  .heading{margin:26px 0 22px;flex-direction:column;align-items:flex-start}.heading h1{font-size:34px}
@@ -180,6 +180,17 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 <button class="textbutton" onclick="showTab('recovery')">Update check-in ↗</button>
 </section>
 </div>
+
+<section class="card whoopcard">
+<div class="cardtop"><div><p class="eyebrow">WHOOP ACTIVITY</p><h2>Today’s activity data</h2></div><button class="textbutton" onclick="showTab('recovery')">Import / update ↗</button></div>
+<div class="activitygrid">
+<div class="activitymetric"><span>Workout calories</span><strong id="overviewBurn">—</strong><small>WHOOP estimate</small></div>
+<div class="activitymetric"><span>Workout duration</span><strong id="overviewDuration">—</strong><small id="overviewActivity">No workout</small></div>
+<div class="activitymetric"><span>Workout strain</span><strong id="overviewWorkoutStrain">—</strong><small>0–21</small></div>
+<div class="activitymetric"><span>Day strain</span><strong id="overviewDayStrain">—</strong><small>WHOOP day load</small></div>
+</div>
+<div id="overviewBurnNote" class="small" style="margin-top:12px"></div>
+</section>
 
 <div class="bottomgrid">
 <section class="card"><div class="cardtop"><h3>On your schedule</h3><svg viewBox="0 0 24 24"><path d="M6 9v6M3 10v4M18 9v6M21 10v4M6 12h12"/></svg></div><div class="sessiontitle" id="sessionTitle">Lower A</div><p class="muted" id="sessionSub">45–60 min · warm-up + strength</p><div class="weekstrip" id="weekStrip"></div><button class="ghost" onclick="showTab('training')">View workout</button></section>
@@ -407,6 +418,7 @@ function render(){
  let rest=d.ill||(d.recovery!==''&&num(d.recovery)<34)||(d.sleep!==''&&num(d.sleep)<6),light=!rest&&((d.recovery!==''&&num(d.recovery)<67)||(d.dayStrain!==''&&num(d.dayStrain)>=16));
  $('direction').textContent=rest?'Recovery day':light?'Keep it lighter':'Ready to train';$('directionText').textContent=rest?'Trade hard training for rest or an easy walk if comfortable. Resume the missed session after you feel recovered.':light?'Reduce working sets by about one third and keep several reps in reserve.':'Follow your planned session if you feel well. Pain or unusual symptoms override the score.';$('recoveryMini').textContent=d.recovery===''?'—':d.recovery+'%';$('sleepMini').textContent=d.sleep===''?'—':d.sleep+' h';
  $('waterLitres').textContent=(num(d.water)/1000).toFixed(2);
+ let ow=d.whoop||{};$('overviewBurn').textContent=d.source==='whoop'&&num(ow.calories)>0?Math.round(num(ow.calories))+' kcal':'—';$('overviewDuration').textContent=d.source==='whoop'&&num(ow.duration)>0?Math.round(num(ow.duration))+' min':'—';$('overviewActivity').textContent=d.source==='whoop'?(ow.activity||'Different workout'):'No WHOOP workout';$('overviewWorkoutStrain').textContent=d.source==='whoop'&&ow.strain!==''&&ow.strain!=null?Number(ow.strain).toFixed(1):'—';$('overviewDayStrain').textContent=d.dayStrain!==''&&d.dayStrain!=null?Number(d.dayStrain).toFixed(1):'—';$('overviewBurnNote').textContent=d.source==='whoop'&&num(ow.calories)>0?(ow.useBurn?Math.round(num(ow.calories)*num(ow.eatbackPct)/100)+' kcal ('+ow.eatbackPct+'%) currently added back to today’s food target.':'Workout burn is displayed only; eat-back is off.'):'Import WHOOP workout data or choose Different workout to show burn, duration and strain here.';
  $('saunaTitle').textContent=(d.ill||d.dehydrated||d.alcohol||rest)?'Skip sauna today':'Sauna is optional';$('saunaText').textContent=(d.ill||d.dehydrated||d.alcohol||rest)?'Prioritize cooling down, fluids and rest. Heat adds more stress when you are already run down.':'Cool down and hydrate first. Start short and stop if dizzy or unwell.';$('saunaBox').innerHTML='<b>'+$('saunaTitle').textContent+'</b><br>'+$('saunaText').textContent;
  let wd=new Date(selectedDate+'T12:00:00').getDay(),tdays=trainingDaysFor(state.gymDays),slot=tdays.indexOf(wd),namesByCount={2:['Full body A','Full body B'],3:['Full body A','Full body B','Full body C'],4:['Upper A','Lower A','Upper B','Lower B'],5:['Upper A','Lower A','Upper B','Lower B','Full body accessories']},plan=slot>=0?[namesByCount[state.gymDays][slot],'45–60 min · warm-up + strength']:['Active rest','20–30 min easy walking or cycling'];
  if(d.source==='rest')plan=['Rest day','Recovery priority'];if(d.source==='whoop')plan=[d.whoop.activity||'Different workout',`${d.whoop.duration||0} min · ~${Math.round(a.burn)} kcal from WHOOP`];$('sessionTitle').textContent=plan[0];$('sessionSub').textContent=plan[1];
