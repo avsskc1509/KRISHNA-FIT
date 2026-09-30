@@ -77,7 +77,7 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 .twocol{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .foodrow,.row{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:14px 0;border-top:1px solid #e5eae4}
 .options{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.option{border:1px solid var(--line);border-radius:11px;background:#fff;padding:14px;cursor:pointer}.option.active{background:#edf5e6;border:2px solid #6f9655}
-.notice{padding:14px 16px;border-radius:10px;background:#edf2e8;margin:14px 0}.warn{background:#fff4df}.danger{background:#fdecef;color:#8b2d36}
+.notice{padding:14px 16px;border-radius:10px;background:#edf2e8;margin:14px 0}.adaptive{border-left:4px solid #78a44f}.adaptive strong{display:block;margin-bottom:4px}.adaptive.aggressive{background:#fff4df;border-left-color:#d49b36}.warn{background:#fff4df}.danger{background:#fdecef;color:#8b2d36}
 .switch{display:flex;align-items:center;gap:9px;margin:12px 0}.switch input{width:19px;height:19px}
 .badge{display:inline-flex;padding:5px 9px;border-radius:999px;background:#e8eee5;font-size:12px}.badge.good{background:#def4d8;color:#315f34}.badge.bad{background:#fff0d0;color:#7a5600}
 .tablewrap{overflow:auto}.datatable{width:100%;border-collapse:collapse;min-width:620px}.datatable th,.datatable td{text-align:left;padding:11px;border-bottom:1px solid var(--line);font-size:13px}
@@ -126,7 +126,7 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 <section id="overview" class="section active">
 <section class="card" id="targetsCard">
 <h2>Your starting targets</h2>
-<p class="muted">Trial targets, not a measured calorie requirement. Review your 2–3 week weight trend, hunger and gym performance. Confirm your current weight below.</p>
+<p class="muted">Planning targets that can adapt to your goal. Review your 2–3 week weight trend, hunger, recovery and gym performance; then adjust as needed.</p>
 <div class="formgrid">
 <label class="field">Rest-day calories<input id="setCalories" type="number" min="1200" max="5000"></label>
 <label class="field">Protein (g)<input id="setProtein" type="number" min="40" max="300"></label>
@@ -135,12 +135,14 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 </div>
 <h3>Weight goal & timeframe</h3>
 <div class="formgrid">
-<label class="field">Starting weight (kg)<input id="setStartWeight" type="number" min="30" max="300" step="0.1"></label>
-<label class="field">Target weight (kg)<input id="setTargetWeight" type="number" min="30" max="300" step="0.1"></label>
-<label class="field">Start date<input id="setStartDate" type="date"></label>
-<label class="field">Goal date<input id="setGoalDate" type="date"></label>
+<label class="field">Starting weight (kg)<input id="setStartWeight" type="number" min="30" max="300" step="0.1" oninput="previewAdaptivePlan()"></label>
+<label class="field">Target weight (kg)<input id="setTargetWeight" type="number" min="30" max="300" step="0.1" oninput="previewAdaptivePlan()"></label>
+<label class="field">Start date<input id="setStartDate" type="date" onchange="previewAdaptivePlan()"></label>
+<label class="field">Goal date<input id="setGoalDate" type="date" onchange="previewAdaptivePlan()"></label>
 </div>
-<p class="muted">Training days add 100 kcal, from 25 g carbohydrate. Your protein goal stays steady. WHOOP workout calories are handled separately when you choose a different workout.</p>
+<label class="switch"><input id="adaptiveGoal" type="checkbox" checked onchange="previewAdaptivePlan()">Adapt calories, macros and workout schedule when my goal changes</label>
+<div id="adaptivePreview" class="notice adaptive"></div>
+<p class="muted">When adaptation is on, Krishna Fit uses your requested weekly rate as a planning signal, keeps protein relatively high, maintains a minimum fat target, and reduces training frequency when the requested deficit is harder to recover from. It is a planning estimate, not a measured calorie requirement.</p>
 <button class="primary" onclick="saveTargets()">Save targets</button>
 </section>
 
@@ -228,7 +230,7 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 
 <script>
 const KEY='krishnaFitDataV8';
-const defaultState={baseCalories:2200,proteinTarget:190,fatTarget:70,gymDays:4,startWeight:98,targetWeight:78,startDate:'2026-09-30',goalDate:'2027-03-30',days:{},supplements:[],labs:[],labReports:[],suppTaken:{},reminderSent:{}};
+const defaultState={baseCalories:2200,proteinTarget:190,fatTarget:70,gymDays:4,adaptiveGoal:true,startWeight:98,targetWeight:78,startDate:'2026-09-30',goalDate:'2027-03-30',days:{},supplements:[],labs:[],labReports:[],suppTaken:{},reminderSent:{}};
 let state={...structuredClone(defaultState),...(JSON.parse(localStorage.getItem(KEY)||'null')||{})};
 state.days=state.days||{};state.supplements=state.supplements||[];state.labs=state.labs||[];state.labReports=state.labReports||[];state.suppTaken=state.suppTaken||{};state.reminderSent=state.reminderSent||{};
 let selectedDate=new Date().toLocaleDateString('en-CA');let toastTimer;
@@ -241,8 +243,40 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showTab(b.dat
 function changeDate(v){if(!v)return;selectedDate=v;render();window.scrollTo({top:0,behavior:'smooth'})}
 function shiftDate(n){let d=new Date(selectedDate+'T12:00:00');d.setDate(d.getDate()+n);selectedDate=d.toLocaleDateString('en-CA');render()}
 function totals(){return day().foods.reduce((a,f)=>({k:a.k+num(f.kcal),p:a.p+num(f.p),c:a.c+num(f.c),f:a.f+num(f.f)}),{k:0,p:0,c:0,f:0})}
-function adjustedTarget(){let d=day(),burn=d.source==='whoop'?num(d.whoop.calories):0,eatback=d.source==='whoop'&&d.whoop.useBurn?Math.round(burn*num(d.whoop.eatbackPct)/100):0,weekday=new Date(selectedDate+'T12:00:00').getDay(),training=[1,2,4,5].includes(weekday)&&d.source!=='rest';return{burn,eatback,target:state.baseCalories+(training?100:0)+eatback}}
-function saveTargets(){let c=num($('setCalories').value),p=num($('setProtein').value),f=num($('setFat').value),g=num($('setGymDays').value),sw=num($('setStartWeight').value),tw=num($('setTargetWeight').value),sd=$('setStartDate').value,gd=$('setGoalDate').value;if(c<1200||p<40||f<30||sw<30||tw<30||!sd||!gd||gd<=sd)return toast('Check your targets and dates');Object.assign(state,{baseCalories:c,proteinTarget:p,fatTarget:f,gymDays:g,startWeight:sw,targetWeight:tw,startDate:sd,goalDate:gd});persist('Targets saved')}
+function trainingDaysFor(count){count=Math.max(2,Math.min(5,Number(count)||4));return count===2?[1,4]:count===3?[1,3,5]:count===5?[1,2,3,4,5]:[1,2,4,5]}
+function latestWeightThrough(date){let weights=Object.entries(state.days).filter(([k,v])=>k<=date&&v.weight!==''&&num(v.weight)>0).sort(([a],[b])=>a.localeCompare(b));return weights.length?num(weights.at(-1)[1].weight):state.startWeight}
+function goalPlan(sw,tw,sd,gd){
+  let start=new Date(sd+'T12:00:00'),end=new Date(gd+'T12:00:00'),days=Math.max(1,(end-start)/86400000),weeks=days/7,change=tw-sw,weekly=Math.abs(change)/weeks,ratePct=sw>0?weekly/sw*100:0,losing=tw<sw,gaining=tw>sw;
+  let maintenance=Math.round(Math.max(1900,Math.min(3600,sw*30))/50)*50;
+  let base=maintenance;
+  if(losing){let deficit=Math.min(maintenance*.25,weekly*1100);base=Math.round(Math.max(1600,maintenance-deficit)/50)*50}
+  else if(gaining){let surplus=Math.min(300,weekly*650);base=Math.round(Math.min(4000,maintenance+surplus)/50)*50}
+  let protein=Math.round(Math.max(100,Math.min(220,sw*(losing?1.8:1.6)))/5)*5;
+  let fat=Math.round(Math.max(50,Math.min(100,sw*.7))/5)*5;
+  let gymDays=gaining?5:(losing&&ratePct>1?3:losing&&ratePct>.75?3:4);
+  let aggressive=losing&&ratePct>1;
+  let label=!losing&&!gaining?'Maintenance goal':aggressive?'Aggressive requested pace':ratePct>.75?'Faster loss pace':ratePct>.35?'Moderate loss pace':losing?'Gentle loss pace':'Gain-focused pace';
+  let explanation=aggressive?'Your requested rate is above ~1% of starting body weight per week. Krishna Fit caps the calorie reduction and lowers lifting frequency to protect recovery rather than chasing the full mathematical deficit.':losing?'Calories are estimated from body weight and requested weekly loss; protein stays high and fat has a floor, with carbs using the remaining calories.':gaining?'A modest calorie surplus and slightly higher training frequency are used for a gain-focused goal.':'Calories stay near the planning maintenance estimate and training remains balanced.';
+  return{baseCalories:base,proteinTarget:protein,fatTarget:fat,gymDays,weekly,ratePct,maintenance,label,explanation,aggressive};
+}
+function previewAdaptivePlan(){
+  if(!$('adaptivePreview'))return;
+  let enabled=$('adaptiveGoal').checked,sw=num($('setStartWeight').value),tw=num($('setTargetWeight').value),sd=$('setStartDate').value,gd=$('setGoalDate').value;
+  if(!enabled){$('adaptivePreview').className='notice adaptive';$('adaptivePreview').innerHTML='<strong>Manual targets</strong>Your calorie, macro and gym-day fields will be kept exactly as entered.';return}
+  if(!sw||!tw||!sd||!gd||gd<=sd){$('adaptivePreview').innerHTML='<strong>Adaptive plan</strong>Enter a valid starting weight, target weight and goal date to preview the recalculation.';return}
+  let plan=goalPlan(sw,tw,sd,gd);
+  $('adaptivePreview').className='notice adaptive'+(plan.aggressive?' aggressive':'');
+  $('adaptivePreview').innerHTML='<strong>'+plan.label+'</strong>'+plan.weekly.toFixed(2)+' kg/week ('+plan.ratePct.toFixed(2)+'% of starting weight/week) · '+plan.baseCalories+' kcal rest day · '+plan.proteinTarget+' g protein · '+plan.fatTarget+' g fat · '+plan.gymDays+' gym days/week.<br><span class="small">'+plan.explanation+'</span>';
+}
+function adjustedTarget(){let d=day(),burn=d.source==='whoop'?num(d.whoop.calories):0,eatback=d.source==='whoop'&&d.whoop.useBurn?Math.round(burn*num(d.whoop.eatbackPct)/100):0,weekday=new Date(selectedDate+'T12:00:00').getDay(),training=trainingDaysFor(state.gymDays).includes(weekday)&&d.source!=='rest';return{burn,eatback,target:state.baseCalories+(training?100:0)+eatback}}
+function saveTargets(){
+  let c=num($('setCalories').value),p=num($('setProtein').value),f=num($('setFat').value),g=num($('setGymDays').value),sw=num($('setStartWeight').value),tw=num($('setTargetWeight').value),sd=$('setStartDate').value,gd=$('setGoalDate').value,adaptive=$('adaptiveGoal').checked;
+  if(sw<30||tw<30||!sd||!gd||gd<=sd)return toast('Check your goal weights and dates');
+  if(adaptive){let plan=goalPlan(sw,tw,sd,gd);c=plan.baseCalories;p=plan.proteinTarget;f=plan.fatTarget;g=plan.gymDays}
+  if(c<1200||p<40||f<30)return toast('Check your calorie and macro targets');
+  Object.assign(state,{baseCalories:c,proteinTarget:p,fatTarget:f,gymDays:g,adaptiveGoal:adaptive,startWeight:sw,targetWeight:tw,startDate:sd,goalDate:gd});
+  persist(adaptive?'Goal and plan adapted':'Targets saved');
+}
 function addFood(){let name=$('foodName').value.trim();if(!name)return toast('Enter a food name');day().foods.push({id:crypto.randomUUID(),name,kcal:num($('foodKcal').value),p:num($('foodP').value),c:num($('foodC').value),f:num($('foodF').value)});['foodName','foodKcal','foodP','foodC','foodF'].forEach(id=>$(id).value='');persist('Meal added')}
 function removeFood(id){day().foods=day().foods.filter(x=>x.id!==id);persist()}
 function setSource(src){day().source=src;if(src!=='whoop')day().whoop.useBurn=false;persist()}
@@ -269,7 +303,7 @@ async function deleteLabReport(id){try{let db=await openLabDb(),tx=db.transactio
 function render(){
  $('selectedDate').value=selectedDate;let d=day(),t=totals(),a=adjustedTarget();
  ['setCalories','setProtein','setFat','setGymDays','setStartWeight','setTargetWeight','setStartDate','setGoalDate'].forEach(id=>{});
- $('setCalories').value=state.baseCalories;$('setProtein').value=state.proteinTarget;$('setFat').value=state.fatTarget;$('setGymDays').value=String(state.gymDays);$('setStartWeight').value=state.startWeight;$('setTargetWeight').value=state.targetWeight;$('setStartDate').value=state.startDate;$('setGoalDate').value=state.goalDate;
+ $('setCalories').value=state.baseCalories;$('setProtein').value=state.proteinTarget;$('setFat').value=state.fatTarget;$('setGymDays').value=String(state.gymDays);$('setStartWeight').value=state.startWeight;$('setTargetWeight').value=state.targetWeight;$('setStartDate').value=state.startDate;$('setGoalDate').value=state.goalDate;$('adaptiveGoal').checked=state.adaptiveGoal!==false;previewAdaptivePlan();
  $('eaten').textContent=Math.round(t.k);$('target').textContent=a.target;$('calBar').style.width=Math.min(100,t.k/a.target*100)+'%';$('remainingText').textContent=(t.k>a.target?Math.round(t.k-a.target)+' kcal over target':Math.round(a.target-t.k)+' kcal remaining');
  $('pNow').textContent=Math.round(t.p);$('cNow').textContent=Math.round(t.c);$('fNow').textContent=Math.round(t.f);$('pTarget').textContent=state.proteinTarget;$('fTarget').textContent=state.fatTarget;let carbs=Math.max(0,Math.round((a.target-state.proteinTarget*4-state.fatTarget*9)/4));$('cTarget').textContent=carbs;$('pBar').style.width=Math.min(100,t.p/state.proteinTarget*100)+'%';$('cBar').style.width=Math.min(100,t.c/Math.max(1,carbs)*100)+'%';$('fBar').style.width=Math.min(100,t.f/state.fatTarget*100)+'%';
  $('foodKcalTotal').textContent=Math.round(t.k)+' kcal';
@@ -281,18 +315,29 @@ function render(){
  $('direction').textContent=rest?'Recovery day':light?'Keep it lighter':'Ready to train';$('directionText').textContent=rest?'Trade hard training for rest or an easy walk if comfortable. Resume the missed session after you feel recovered.':light?'Reduce working sets by about one third and keep several reps in reserve.':'Follow your planned session if you feel well. Pain or unusual symptoms override the score.';$('recoveryMini').textContent=d.recovery===''?'—':d.recovery+'%';$('sleepMini').textContent=d.sleep===''?'—':d.sleep+' h';
  $('waterLitres').textContent=(num(d.water)/1000).toFixed(2);
  $('saunaTitle').textContent=(d.ill||d.dehydrated||d.alcohol||rest)?'Skip sauna today':'Sauna is optional';$('saunaText').textContent=(d.ill||d.dehydrated||d.alcohol||rest)?'Prioritize cooling down, fluids and rest. Heat adds more stress when you are already run down.':'Cool down and hydrate first. Start short and stop if dizzy or unwell.';$('saunaBox').innerHTML='<b>'+$('saunaTitle').textContent+'</b><br>'+$('saunaText').textContent;
- let wd=new Date(selectedDate+'T12:00:00').getDay(),plans={1:['Upper A','45–60 min · warm-up + strength'],2:['Lower A','45–60 min · warm-up + strength'],4:['Upper B','45–60 min · warm-up + strength'],5:['Lower B','45–60 min · warm-up + strength']},plan=plans[wd]||['Active rest','20–30 min easy walking or cycling'];
+ let wd=new Date(selectedDate+'T12:00:00').getDay(),tdays=trainingDaysFor(state.gymDays),slot=tdays.indexOf(wd),namesByCount={2:['Full body A','Full body B'],3:['Full body A','Full body B','Full body C'],4:['Upper A','Lower A','Upper B','Lower B'],5:['Upper A','Lower A','Upper B','Lower B','Full body accessories']},plan=slot>=0?[namesByCount[state.gymDays][slot],'45–60 min · warm-up + strength']:['Active rest','20–30 min easy walking or cycling'];
  if(d.source==='rest')plan=['Rest day','Recovery priority'];if(d.source==='whoop')plan=[d.whoop.activity||'Different workout',`${d.whoop.duration||0} min · ~${Math.round(a.burn)} kcal from WHOOP`];$('sessionTitle').textContent=plan[0];$('sessionSub').textContent=plan[1];
- const names=['M','T','W','T','F','S','S'];$('weekStrip').innerHTML=names.map((name,i)=>{let dayNum=(i+1)%7,training=[1,2,4,5].includes(dayNum);return `<div class="${wd===dayNum?'active':''}"><span>${name}</span><svg viewBox="0 0 24 24"><path d="${training?'M6 9v6M3 10v4M18 9v6M21 10v4M6 12h12':'M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z'}"/></svg></div>`}).join('');
+ const names=['M','T','W','T','F','S','S'];$('weekStrip').innerHTML=names.map((name,i)=>{let dayNum=(i+1)%7,training=trainingDaysFor(state.gymDays).includes(dayNum);return `<div class="${wd===dayNum?'active':''}"><span>${name}</span><svg viewBox="0 0 24 24"><path d="${training?'M6 9v6M3 10v4M18 9v6M21 10v4M6 12h12':'M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z'}"/></svg></div>`}).join('');
  document.querySelectorAll('.option').forEach(o=>o.classList.toggle('active',o.dataset.source===d.source));$('whoopWorkout').classList.toggle('hidden',d.source!=='whoop');$('appWorkout').classList.toggle('hidden',d.source!=='app');$('activity').value=d.whoop.activity||'';$('duration').value=d.whoop.duration||'';$('workoutStrain').value=d.whoop.strain||'';$('workoutCalories').value=d.whoop.calories||'';$('useBurn').checked=!!d.whoop.useBurn;$('eatbackPct').value=String(d.whoop.eatbackPct??50);
  $('burnExplain').textContent=d.source==='whoop'?(d.whoop.useBurn?`WHOOP reports ~${Math.round(a.burn)} kcal. ${d.whoop.eatbackPct}% (${a.eatback} kcal) is added to today's target.`:`WHOOP reports ~${Math.round(a.burn)} kcal, shown separately. Eat-back is off.`):'No WHOOP workout calories are being added today.';
  ['recovery','sleep','dayStrain','weight'].forEach(id=>$(id).value=d[id]??'');$('ill').checked=d.ill;$('dehydrated').checked=d.dehydrated;$('alcohol').checked=d.alcohol;
- let workoutNames={1:['Upper A','Machine chest press — 3×8–12','Lat pulldown — 3×8–12','Seated cable row — 2×10–12'],2:['Lower A','Romanian deadlift — 3×8–10','Leg press — 2×10–12','Hamstring curl — 3×10–15'],4:['Upper B','Incline dumbbell press — 3×8–12','Chest-supported row — 3×8–12','Neutral pulldown — 2×10–12'],5:['Lower B','Hip thrust — 3×8–12','Box squat — 2×8–10','Pallof press — 2×10/side']},wo=workoutNames[wd]||['Active rest','20–30 min easy walking or cycling if comfortable'];$('workoutPlan').innerHTML='<h3>'+wo[0]+'</h3>'+wo.slice(1).map(x=>'<div class="row"><span>'+x+'</span><span class="small">2–3 reps in reserve</span></div>').join('');
+ let library={
+ 'Upper A':['Machine chest press — 3×8–12','Lat pulldown — 3×8–12','Seated cable row — 2×10–12','Cable lateral raise — 2×12–15'],
+ 'Lower A':['Romanian deadlift — 3×8–10','Leg press — 2×10–12','Hamstring curl — 3×10–15','Calf raise — 2×12–15'],
+ 'Upper B':['Incline dumbbell press — 3×8–12','Chest-supported row — 3×8–12','Neutral pulldown — 2×10–12','Cable curl + pressdown — 2×10–15'],
+ 'Lower B':['Hip thrust — 3×8–12','Box squat or leg press — 2×8–12','Hamstring curl — 2×10–15','Pallof press — 2×10/side'],
+ 'Full body A':['Machine chest press — 3×8–12','Lat pulldown — 3×8–12','Leg press — 2×10–12','Romanian deadlift — 2×8–10'],
+ 'Full body B':['Incline dumbbell press — 3×8–12','Seated cable row — 3×8–12','Hip thrust — 2×8–12','Hamstring curl — 2×10–15'],
+ 'Full body C':['Chest-supported row — 3×8–12','Machine press — 2×8–12','Leg press — 2×10–12','Cable lateral raise — 2×12–15'],
+ 'Full body accessories':['Pulldown — 2×10–12','Machine press — 2×10–12','Leg curl — 2×12–15','Lateral raise + curls — 2×12–15']
+},woName=slot>=0?namesByCount[state.gymDays][slot]:'Active rest',moves=library[woName]||['20–30 min easy walking or cycling if comfortable'];
+let planNow=goalPlan(state.startWeight,state.targetWeight,state.startDate,state.goalDate),volumeNote=planNow.aggressive?'Goal pace is aggressive: use 1–2 working sets and avoid failure.':light?'Recovery is lower: reduce working sets by about one third.':'Keep 2–3 reps in reserve on most sets.';
+$('workoutPlan').innerHTML='<h3>'+woName+'</h3><p class="muted">'+volumeNote+'</p>'+moves.map(x=>'<div class="row"><span>'+x+'</span><span class="small">'+(planNow.aggressive?'1–2 sets / easy':'2–3 reps in reserve')+'</span></div>').join('');
  $('suppList').innerHTML=state.supplements.length?state.supplements.map(s=>`<div class="row"><div><b>${esc(s.name)}</b><div class="small">${esc(s.dose||'No dose entered')}${s.notes?' · '+esc(s.notes):''}</div></div><span class="badge ${state.suppTaken[takenKey(s.id)]?'good':(s.time&&dueToday(s)?'bad':'')}">${state.suppTaken[takenKey(s.id)]?'Taken':(s.time?s.time+' · '+s.days:'No reminder')}</span><span><input type="checkbox" ${state.suppTaken[takenKey(s.id)]?'checked':''} onchange="toggleSupplement('${s.id}',this.checked)"> <button class="iconbutton" onclick="removeSupplement('${s.id}')">×</button></span></div>`).join(''):'<p class="muted">No supplements added yet.</p>';$('suppRecommendations').innerHTML=supplementRecommendations().map(x=>'<div class="notice">'+esc(x)+'</div>').join('');
  $('labRows').innerHTML=state.labs.length?state.labs.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(l=>`<tr><td>${esc(l.date)}</td><td><b>${esc(l.marker)}</b></td><td>${l.value} ${esc(l.unit||'')}</td><td>${l.low!==''?l.low:'—'} – ${l.high!==''?l.high:'—'}</td><td><span class="badge ${labStatus(l)==='In range'?'good':'bad'}">${labStatus(l)}</span></td><td><button class="iconbutton" onclick="removeLab('${l.id}')">×</button></td></tr>`).join(''):'<tr><td colspan="6" class="muted">No lab values entered yet.</td></tr>';let guidance=labGuidance();$('labPlan').innerHTML=guidance.length?guidance.map(x=>`<div class="notice"><b>${esc(x.title)}</b><br>${esc(x.text)}</div>`).join(''):'<div class="notice">No out-of-range values are entered.</div>';$('labFiles').innerHTML=state.labReports.length?state.labReports.map(f=>`<div class="row"><div><b>${esc(f.name)}</b><div class="small">Stored locally · ${Math.round(f.size/1024)} KB</div></div><span></span><button class="iconbutton" onclick="deleteLabReport('${f.id}')">×</button></div>`).join(''):'<p class="small">No report files attached.</p>';
  $('labDate').value=selectedDate;
 }
-render();
+render();previewAdaptivePlan();
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script>
 </body>
