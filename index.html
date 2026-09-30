@@ -80,6 +80,7 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 .notice{padding:14px 16px;border-radius:10px;background:#edf2e8;margin:14px 0}.adaptive{border-left:4px solid #78a44f}.adaptive strong{display:block;margin-bottom:4px}.adaptive.aggressive{background:#fff4df;border-left-color:#d49b36}.warn{background:#fff4df}.danger{background:#fdecef;color:#8b2d36}
 .switch{display:flex;align-items:center;gap:9px;margin:12px 0}.switch input{width:19px;height:19px}
 .badge{display:inline-flex;padding:5px 9px;border-radius:999px;background:#e8eee5;font-size:12px}.badge.good{background:#def4d8;color:#315f34}.badge.bad{background:#fff0d0;color:#7a5600}
+.trendgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.chartbox{height:230px;margin-top:14px}.chartbox svg{width:100%;height:100%}.chartgrid{stroke:#e0e6df;stroke-width:1}.chartline{fill:none;stroke:#6f9655;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.chartline.secondary{stroke:#9ebcfa}.chartpoint{fill:#fff;stroke:#6f9655;stroke-width:2}.charttarget{stroke:#9eaaa0;stroke-width:1.5;stroke-dasharray:5 5}.chartlabel{font-size:10px;fill:#6a766d}.projection{background:#edf3e7}.projection strong{font-size:28px;display:block;margin:4px 0}.trendstat{display:flex;gap:28px;flex-wrap:wrap;margin-top:16px}.trendstat div span{display:block;font-size:11px;color:#6b786f}.trendstat div strong{font-size:20px}.importgrid{display:grid;grid-template-columns:1.15fr 1fr;gap:18px}@media(max-width:800px){.trendgrid,.importgrid{grid-template-columns:1fr}}
 .tablewrap{overflow:auto}.datatable{width:100%;border-collapse:collapse;min-width:620px}.datatable th,.datatable td{text-align:left;padding:11px;border-bottom:1px solid var(--line);font-size:13px}
 .hidden{display:none!important}.goal-editor{display:none}.goal-editor.open{display:block;animation:fade .2s ease}.plan-change{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.plan-change div{background:rgba(255,255,255,.62);border:1px solid rgba(80,110,65,.14);border-radius:8px;padding:9px}.plan-change strong{font-size:16px;margin:0}.footer{padding:24px 0;color:#748077;font-size:12px}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,18px);opacity:0;background:#143227;color:#fff;border-radius:10px;padding:10px 14px;font-weight:700;transition:.18s ease;z-index:99;pointer-events:none}.toast.show{opacity:1;transform:translate(-50%,0)}
@@ -114,11 +115,12 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 <div class="navrow">
 <nav class="tabs">
 <button class="active" data-tab="overview"><svg viewBox="0 0 24 24"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>Overview</button>
-<button data-tab="nutrition"><svg viewBox="0 0 24 24"><path d="M7 3v8M10 3v8M7 7h3M8.5 11v10M16 3v18M16 3c3 2 4 5 4 8h-4"/></svg>Nutrition</button>
-<button data-tab="training"><svg viewBox="0 0 24 24"><path d="M6 9v6M3 10v4M18 9v6M21 10v4M6 12h12"/></svg>Training</button>
-<button data-tab="recovery"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-9-9c-2-4.5 3-8 6-4l3 3 3-3c3-4 8-.5 6 4-2 4.5-9 9-9 9Z"/></svg>Recovery</button>
-<button data-tab="supplements"><svg viewBox="0 0 24 24"><path d="M8 3h8v4H8zM7 7h10v14H7zM10 11h4M12 9v4"/></svg>Supplements</button>
-<button data-tab="labs"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9c-.8 1.5.2 3 2 3h10c1.8 0 2.8-1.5 2-3l-5-9V3M8 16h8"/></svg>Labs</button>
+<button data-tab="nutrition"><svg viewBox="0 0 24 24"><path d="M6.5 3v7.5M9.5 3v7.5M6.5 7h3M8 10.5V21M16.2 3v18M16.2 3c2.6 1.8 3.8 4.6 3.8 7.8h-3.8"/></svg>Nutrition</button>
+<button data-tab="training"><svg viewBox="0 0 24 24"><path d="M6.5 8.5v7M3.5 10v4M17.5 8.5v7M20.5 10v4M6.5 12h11"/></svg>Training</button>
+<button data-tab="recovery"><svg viewBox="0 0 24 24"><path d="M12 20.5s-6.7-4.1-8.8-8.2C1.3 8.5 4 5.6 7.1 6c1.7.2 3 1.3 4.9 3.5C13.9 7.3 15.2 6.2 16.9 6c3.1-.4 5.8 2.5 3.9 6.3-2.1 4.1-8.8 8.2-8.8 8.2Z"/><path d="M8 12h2l1.1-2.2 1.7 4.1 1.2-2.4h2"/></svg>Recovery</button>
+<button data-tab="trends"><svg viewBox="0 0 24 24"><path d="M4 17l4.5-4.5 3.6 2.7 6.2-7.1"/><path d="M15.5 8h3v3"/></svg>Trends</button>
+<button data-tab="supplements"><svg viewBox="0 0 24 24"><rect x="7" y="5" width="10" height="15" rx="2"/><path d="M9 2h6v3M9 11h6M12 8v6"/></svg>Supplements</button>
+<button data-tab="labs"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9c-.8 1.5.2 3 2 3h10c1.8 0 2.8-1.5 2-3l-5-9V3M8 15.5h8"/></svg>Labs</button>
 </nav>
 <div class="saved"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 7"/></svg><span id="saveState">Saved</span></div>
 </div>
@@ -201,9 +203,24 @@ h1{font-size:39px;line-height:1.1;letter-spacing:-1.6px;margin:0;font-weight:700
 </section>
 
 <section id="recovery" class="section">
+<div class="importgrid">
+<section class="card"><p class="eyebrow">WHOOP MONTH IMPORT</p><h2>Import this month’s WHOOP data</h2><p class="muted">Choose WHOOP CSV export files. Krishna Fit will recognize cycle/recovery and workout CSVs, merge only this calendar month, and keep your existing meals and manual notes.</p><label class="field">WHOOP CSV files<input id="whoopFiles" type="file" accept=".csv,text/csv" multiple></label><button class="primary" onclick="importWhoopMonth()">Import current month</button><div id="whoopImportResult" class="small" style="margin-top:10px"></div></section>
+<section class="card direction"><p class="eyebrow">WHAT GETS MERGED</p><h2>Recovery + activity</h2><p>Recovery score, sleep duration, day strain, workout activity, duration, strain and workout calories are mapped to their dates when those columns are present.</p><p class="small">WHOOP exports can vary by version. The importer uses flexible column matching and skips rows it cannot interpret instead of overwriting unrelated data.</p></section>
+</div>
 <div class="twocol">
 <section class="card"><h2>Daily recovery</h2><div class="formgrid"><label class="field">WHOOP recovery (%)<input id="recovery" type="number" min="0" max="100"></label><label class="field">Sleep (hours)<input id="sleep" type="number" min="0" max="24" step="0.1"></label><label class="field">Day strain<input id="dayStrain" type="number" min="0" max="21" step="0.1"></label><label class="field">Morning weight (kg)<input id="weight" type="number" min="30" max="300" step="0.1"></label></div><label class="switch"><input id="ill" type="checkbox">Feeling ill / feverish</label><label class="switch"><input id="dehydrated" type="checkbox">Dehydrated</label><label class="switch"><input id="alcohol" type="checkbox">Alcohol today / still feeling effects</label><button class="primary" onclick="saveRecovery()">Save recovery</button></section>
 <section class="card sauna"><h2>Sauna guidance</h2><div id="saunaBox" class="notice"></div><p class="small">Sauna is optional. Skip if ill, dehydrated, dizzy, or after alcohol.</p></section>
+</div>
+</section>
+
+<section id="trends" class="section">
+<div class="trendgrid">
+<section class="card"><div class="cardtop"><div><p class="eyebrow">WEIGHT TREND</p><h2>Weight & trajectory</h2></div><span class="badge" id="weightTrendBadge">Need data</span></div><div id="weightChart" class="chartbox"></div><div class="trendstat"><div><span>Recent rate</span><strong id="weeklyTrend">—</strong></div><div><span>Projected goal date</span><strong id="projectedGoalDate">—</strong></div></div></section>
+<section class="card projection"><p class="eyebrow">PROJECTION</p><h2 id="projectionTitle">Log more weigh-ins</h2><strong id="projectionWeight">—</strong><p id="projectionText">Krishna Fit needs at least 3 weigh-ins on different days before showing a trend projection.</p><p class="small">Projection is a straight-line estimate from recent logged weights, not a guarantee. Water, sodium, glycogen and normal daily variation can shift scale weight.</p></section>
+<section class="card"><div class="cardtop"><div><p class="eyebrow">ENERGY TREND</p><h2>Calories logged</h2></div><span class="badge" id="calAvgBadge">—</span></div><div id="calorieChart" class="chartbox"></div></section>
+<section class="card"><div class="cardtop"><div><p class="eyebrow">RECOVERY TREND</p><h2>WHOOP recovery</h2></div><span class="badge" id="recoveryAvgBadge">—</span></div><div id="recoveryChart" class="chartbox"></div></section>
+<section class="card"><div class="cardtop"><div><p class="eyebrow">SLEEP TREND</p><h2>Sleep duration</h2></div><span class="badge" id="sleepAvgBadge">—</span></div><div id="sleepChart" class="chartbox"></div></section>
+<section class="card"><div class="cardtop"><div><p class="eyebrow">WORKOUT TREND</p><h2>WHOOP workout calories</h2></div><span class="badge" id="burnAvgBadge">—</span></div><div id="burnChart" class="chartbox"></div></section>
 </div>
 </section>
 
@@ -308,6 +325,74 @@ function supplementRecommendations(){let out=[];for(let x of labGuidance()){if(/
 function openLabDb(){return new Promise((res,rej)=>{let q=indexedDB.open('KrishnaFitFiles',1);q.onupgradeneeded=()=>q.result.createObjectStore('reports',{keyPath:'id'});q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
 async function storeLabReport(e){let file=e.target.files?.[0];if(!file)return;if(file.size>15*1024*1024)return toast('Use a report under 15 MB');let id=crypto.randomUUID();try{let db=await openLabDb(),tx=db.transaction('reports','readwrite');tx.objectStore('reports').put({id,name:file.name,type:file.type,size:file.size,file});await new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});state.labReports.push({id,name:file.name,size:file.size,added:selectedDate});persist('Report stored locally')}catch{toast('Could not store this report')}finally{e.target.value=''}}
 async function deleteLabReport(id){try{let db=await openLabDb(),tx=db.transaction('reports','readwrite');tx.objectStore('reports').delete(id)}catch{}state.labReports=state.labReports.filter(x=>x.id!==id);persist()}
+function parseCSV(text){
+ let rows=[],row=[],cell='',q=false;
+ for(let i=0;i<text.length;i++){let c=text[i];if(c==='"'){if(q&&text[i+1]==='"'){cell+='"';i++}else q=!q}else if(c===','&&!q){row.push(cell);cell=''}else if((c==='\n'||c==='\r')&&!q){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell);if(row.some(x=>x.trim()!==''))rows.push(row);row=[];cell=''}else cell+=c}
+ row.push(cell);if(row.some(x=>x.trim()!==''))rows.push(row);return rows
+}
+function headerIndex(headers,patterns){let h=headers.map(x=>String(x).trim().toLowerCase());for(let p of patterns){let i=h.findIndex(x=>x.includes(p));if(i>=0)return i}return-1}
+function isoDate(v){let m=String(v||'').match(/(\d{4}-\d{2}-\d{2})/);if(m)return m[1];let d=new Date(v);return Number.isFinite(d.getTime())?d.toLocaleDateString('en-CA'):''}
+function finiteVal(v){let n=Number(String(v??'').replace(/[^0-9.+-]/g,''));return Number.isFinite(n)?n:null}
+async function importWhoopMonth(){
+ let files=[...($('whoopFiles').files||[])];if(!files.length)return toast('Choose WHOOP CSV files');
+ let month=selectedDate.slice(0,7),accepted=0,skipped=0,workouts=0,cycles=0;
+ for(let file of files){
+  let rows=parseCSV(await file.text());if(rows.length<2){skipped++;continue}
+  let headers=rows.shift();
+  let dateI=headerIndex(headers,['cycle start time','start time','date']),recI=headerIndex(headers,['recovery score']),sleepI=headerIndex(headers,['asleep duration','sleep duration']),dayStrainI=headerIndex(headers,['day strain']),activityI=headerIndex(headers,['activity name','sport name','activity']),strainI=headerIndex(headers,['strain']),calI=headerIndex(headers,['energy burned','calories','kilocalories','kcal']),durI=headerIndex(headers,['duration']);
+  for(let r of rows){
+   let date=dateI>=0?isoDate(r[dateI]):'';if(!date||date.slice(0,7)!==month){skipped++;continue}
+   state.days[date]??={foods:[],source:'app',whoop:{activity:'',duration:0,strain:'',calories:0,useBurn:false,eatbackPct:50},recovery:'',sleep:'',dayStrain:'',weight:'',water:0,ill:false,dehydrated:false,alcohol:false};
+   let d=state.days[date],changed=false;
+   if(recI>=0){let v=finiteVal(r[recI]);if(v!==null&&v>=0&&v<=100){d.recovery=v;changed=true;cycles++}}
+   if(sleepI>=0){let v=finiteVal(r[sleepI]);if(v!==null){d.sleep=v>24?Math.round(v/60*10)/10:v;changed=true}}
+   if(dayStrainI>=0){let v=finiteVal(r[dayStrainI]);if(v!==null&&v>=0&&v<=21){d.dayStrain=v;changed=true}}
+   let activity=activityI>=0?String(r[activityI]||'').trim():'';
+   let calories=calI>=0?finiteVal(r[calI]):null;
+   let strain=strainI>=0?finiteVal(r[strainI]):null;
+   let duration=durI>=0?finiteVal(r[durI]):null;
+   if(activity||calories!==null){
+     d.source='whoop';d.whoop=d.whoop||{activity:'',duration:0,strain:'',calories:0,useBurn:false,eatbackPct:50};
+     if(activity)d.whoop.activity=d.whoop.activity?d.whoop.activity+' + '+activity:activity;
+     if(calories!==null)d.whoop.calories=Math.round(num(d.whoop.calories)+Math.max(0,calories));
+     if(strain!==null&&strain>=0&&strain<=21)d.whoop.strain=Math.max(num(d.whoop.strain),strain);
+     if(duration!==null)d.whoop.duration=Math.round(num(d.whoop.duration)+(duration>300?duration/60:duration));
+     workouts++;changed=true;
+   }
+   if(changed)accepted++;else skipped++;
+  }
+ }
+ if(persist('WHOOP month imported')){$('whoopImportResult').textContent=accepted+' rows merged · '+cycles+' recovery rows · '+workouts+' workout rows · '+skipped+' skipped/outside month';renderTrends()}
+}
+function trendDays(limit=30){return Object.entries(state.days).filter(([k])=>k<=selectedDate).sort(([a],[b])=>a.localeCompare(b)).slice(-limit)}
+function linearRegression(points){if(points.length<2)return null;let n=points.length,sx=0,sy=0,sxy=0,sxx=0;points.forEach(p=>{sx+=p.x;sy+=p.y;sxy+=p.x*p.y;sxx+=p.x*p.x});let den=n*sxx-sx*sx;if(!den)return null;let slope=(n*sxy-sx*sy)/den;return{slope,intercept:(sy-slope*sx)/n}}
+function lineChart(rows,valueFn,{target=null,suffix='',empty='No data logged yet.'}={}){
+ let pts=rows.map(([date,d],i)=>({date,y:valueFn(d),i})).filter(p=>Number.isFinite(p.y));if(pts.length<2)return '<div class="muted" style="padding-top:80px;text-align:center">'+empty+'</div>';
+ let ys=pts.map(p=>p.y).concat(target===null?[]:[target]),min=Math.min(...ys),max=Math.max(...ys);if(min===max){min-=1;max+=1}let pad=(max-min)*.15;min-=pad;max+=pad;
+ let W=640,H=210,L=40,R=14,T=12,B=28,x=i=>L+(W-L-R)*(i/Math.max(1,pts.length-1)),y=v=>T+(H-T-B)*(1-(v-min)/(max-min)),path=pts.map((p,i)=>(i?'L':'M')+x(i).toFixed(1)+','+y(p.y).toFixed(1)).join(' ');
+ let grid=[0,.25,.5,.75,1].map(q=>{let yy=T+(H-T-B)*q,val=max-(max-min)*q;return '<line class="chartgrid" x1="'+L+'" x2="'+(W-R)+'" y1="'+yy+'" y2="'+yy+'"/><text class="chartlabel" x="0" y="'+(yy+3)+'">'+val.toFixed(val<10?1:0)+suffix+'</text>'}).join('');
+ let targetLine=target===null?'':'<line class="charttarget" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(target)+'" y2="'+y(target)+'"/>';
+ let labels=pts.filter((_,i)=>i===0||i===pts.length-1||i===Math.floor((pts.length-1)/2)).map((p)=>'<text class="chartlabel" text-anchor="middle" x="'+x(pts.indexOf(p))+'" y="'+(H-7)+'">'+p.date.slice(5)+'</text>').join('');
+ return '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+grid+targetLine+'<path class="chartline" d="'+path+'"/>'+pts.map((p,i)=>'<circle class="chartpoint" cx="'+x(i)+'" cy="'+y(p.y)+'" r="3"/>').join('')+labels+'</svg>'
+}
+function renderTrends(){
+ if(!$('weightChart'))return;let rows=trendDays(30);
+ let weights=rows.map(([date,d])=>({date,y:d.weight===''?null:num(d.weight)})).filter(x=>x.y);
+ $('weightChart').innerHTML=lineChart(rows,d=>d.weight===''?NaN:num(d.weight),{target:state.targetWeight,suffix:' kg'});
+ if(weights.length>=3){
+   let t0=new Date(weights[0].date+'T12:00:00').getTime(),pts=weights.map(w=>({x:(new Date(w.date+'T12:00:00').getTime()-t0)/86400000,y:w.y})),reg=linearRegression(pts),weekly=reg?reg.slope*7:0,last=weights.at(-1),toward=(state.targetWeight-state.startWeight)*weekly>0;
+   $('weeklyTrend').textContent=(weekly>0?'+':'')+weekly.toFixed(2)+' kg/wk';$('weightTrendBadge').textContent=toward?'Toward goal':'Off goal direction';
+   let daysTo=reg&&reg.slope!==0?(state.targetWeight-last.y)/reg.slope:NaN,projDate=Number.isFinite(daysTo)&&daysTo>0?new Date(new Date(last.date+'T12:00:00').getTime()+daysTo*86400000):null;
+   $('projectedGoalDate').textContent=projDate?projDate.toLocaleDateString(undefined,{month:'short',day:'numeric'}):'—';
+   let goalDate=new Date(state.goalDate+'T12:00:00'),daysFromLast=(goalDate-new Date(last.date+'T12:00:00'))/86400000,pred=reg?last.y+reg.slope*daysFromLast:last.y;
+   $('projectionWeight').textContent=pred.toFixed(1)+' kg';$('projectionTitle').textContent='Estimated weight by goal date';$('projectionText').textContent='Based on your recent logged trend of '+weekly.toFixed(2)+' kg/week. '+(projDate?'At the same trend, the target would be reached around '+projDate.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})+'.':'There is not a stable target-date crossing yet.');
+ }else{$('weeklyTrend').textContent='—';$('projectedGoalDate').textContent='—';$('weightTrendBadge').textContent='Need 3 weigh-ins';$('projectionWeight').textContent='—';$('projectionTitle').textContent='Log more weigh-ins';$('projectionText').textContent='Krishna Fit needs at least 3 weigh-ins on different days before showing a trend projection.'}
+ let calRows=rows.map(([date,d])=>[date,d]);$('calorieChart').innerHTML=lineChart(calRows,d=>(d.foods||[]).reduce((a,f)=>a+num(f.kcal),0),{target:state.baseCalories,suffix:''});
+ let cvals=calRows.map(([,d])=>(d.foods||[]).reduce((a,f)=>a+num(f.kcal),0)).filter(v=>v>0);$('calAvgBadge').textContent=cvals.length?Math.round(cvals.reduce((a,b)=>a+b,0)/cvals.length)+' avg':'—';
+ $('recoveryChart').innerHTML=lineChart(rows,d=>d.recovery===''?NaN:num(d.recovery),{suffix:'%'});let rv=rows.map(([,d])=>d.recovery===''?NaN:num(d.recovery)).filter(Number.isFinite);$('recoveryAvgBadge').textContent=rv.length?Math.round(rv.reduce((a,b)=>a+b,0)/rv.length)+'% avg':'—';
+ $('sleepChart').innerHTML=lineChart(rows,d=>d.sleep===''?NaN:num(d.sleep),{suffix:' h'});let sv=rows.map(([,d])=>d.sleep===''?NaN:num(d.sleep)).filter(Number.isFinite);$('sleepAvgBadge').textContent=sv.length?(sv.reduce((a,b)=>a+b,0)/sv.length).toFixed(1)+' h avg':'—';
+ $('burnChart').innerHTML=lineChart(rows,d=>d.source==='whoop'&&d.whoop?num(d.whoop.calories):NaN,{suffix:''});let bv=rows.map(([,d])=>d.source==='whoop'&&d.whoop?num(d.whoop.calories):NaN).filter(v=>Number.isFinite(v)&&v>0);$('burnAvgBadge').textContent=bv.length?Math.round(bv.reduce((a,b)=>a+b,0)/bv.length)+' kcal avg':'—';
+}
 function render(){
  $('selectedDate').value=selectedDate;let d=day(),t=totals(),a=adjustedTarget();
  ['setCalories','setProtein','setFat','setGymDays','setStartWeight','setTargetWeight','setStartDate','setGoalDate'].forEach(id=>{});
@@ -343,7 +428,7 @@ let planNow=goalPlan(state.startWeight,state.targetWeight,state.startDate,state.
 $('workoutPlan').innerHTML='<h3>'+woName+'</h3><p class="muted">'+volumeNote+'</p>'+moves.map(x=>'<div class="row"><span>'+x+'</span><span class="small">'+(planNow.aggressive?'1–2 sets / easy':'2–3 reps in reserve')+'</span></div>').join('');
  $('suppList').innerHTML=state.supplements.length?state.supplements.map(s=>`<div class="row"><div><b>${esc(s.name)}</b><div class="small">${esc(s.dose||'No dose entered')}${s.notes?' · '+esc(s.notes):''}</div></div><span class="badge ${state.suppTaken[takenKey(s.id)]?'good':(s.time&&dueToday(s)?'bad':'')}">${state.suppTaken[takenKey(s.id)]?'Taken':(s.time?s.time+' · '+s.days:'No reminder')}</span><span><input type="checkbox" ${state.suppTaken[takenKey(s.id)]?'checked':''} onchange="toggleSupplement('${s.id}',this.checked)"> <button class="iconbutton" onclick="removeSupplement('${s.id}')">×</button></span></div>`).join(''):'<p class="muted">No supplements added yet.</p>';$('suppRecommendations').innerHTML=supplementRecommendations().map(x=>'<div class="notice">'+esc(x)+'</div>').join('');
  $('labRows').innerHTML=state.labs.length?state.labs.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(l=>`<tr><td>${esc(l.date)}</td><td><b>${esc(l.marker)}</b></td><td>${l.value} ${esc(l.unit||'')}</td><td>${l.low!==''?l.low:'—'} – ${l.high!==''?l.high:'—'}</td><td><span class="badge ${labStatus(l)==='In range'?'good':'bad'}">${labStatus(l)}</span></td><td><button class="iconbutton" onclick="removeLab('${l.id}')">×</button></td></tr>`).join(''):'<tr><td colspan="6" class="muted">No lab values entered yet.</td></tr>';let guidance=labGuidance();$('labPlan').innerHTML=guidance.length?guidance.map(x=>`<div class="notice"><b>${esc(x.title)}</b><br>${esc(x.text)}</div>`).join(''):'<div class="notice">No out-of-range values are entered.</div>';$('labFiles').innerHTML=state.labReports.length?state.labReports.map(f=>`<div class="row"><div><b>${esc(f.name)}</b><div class="small">Stored locally · ${Math.round(f.size/1024)} KB</div></div><span></span><button class="iconbutton" onclick="deleteLabReport('${f.id}')">×</button></div>`).join(''):'<p class="small">No report files attached.</p>';
- $('labDate').value=selectedDate;
+ $('labDate').value=selectedDate;renderTrends();
 }
 render();
 if('serviceWorker'in navigator){
